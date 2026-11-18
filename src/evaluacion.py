@@ -36,22 +36,31 @@ def diversidad_tematica(temas: list[list[str]]) -> float:
 
 
 def _ventanas_por_documento(textos_procesados: list[str], ventana: int):
-    """Fragmentos de hasta `ventana` tokens por documento."""
+    """Ventanas DESLIZANTES (paso 1) de `ventana` tokens por documento.
+
+    Igual que las implementaciones estándar de coherencia (gensim,
+    Palmetto): cada palabra participa en varias ventanas solapadas, lo que
+    da muchos más casos de co-aparición que trozos no solapados.
+    """
     ventanas = []
     for texto in textos_procesados:
         tokens = texto.split()
-        for inicio in range(0, len(tokens), ventana):
-            trozo = tokens[inicio : inicio + ventana]
-            if len(trozo) >= 2:
-                ventanas.append(trozo)
+        if len(tokens) <= ventana:
+            if len(tokens) >= 2:
+                ventanas.append(tokens)
+            continue
+        for inicio in range(len(tokens) - ventana + 1):
+            ventanas.append(tokens[inicio : inicio + ventana])
     return ventanas
 
 
 def _estadisticas_coocurrencia(textos_procesados: list[str], ventana: int):
-    """Conteos de co-aparición por ventana para NPMI (segmentación S_one-one).
+    """Conteos de co-aparición para NPMI: ventanas deslizantes (paso 1) y
+    pares NO ordenados de palabras distintas (segmentación S_one-one de
+    Röder et al., 2015).
 
     Devuelve (total_ventanas, n_pares, n_individuales): cuántas ventanas
-    contienen cada par no ordenado de palabras distintas y cada palabra.
+    contienen cada par y cada palabra.
     """
     n_pares: Counter = Counter()
     n_individual: Counter = Counter()

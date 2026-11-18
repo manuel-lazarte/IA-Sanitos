@@ -45,3 +45,10 @@ def test_etiqueta_tema_es_1_based_y_acota_palabras():
 def test_etiqueta_tema_con_menos_palabras_que_n():
     etiqueta = app.etiqueta_tema(0, ["x", "y"], 5)
     assert etiqueta == "Tema 1 · x, y"
+
+
+def test_etiquetas_eje_respetan_ids_de_temas():
+    """Si un tema nunca predomina (sin clave en el dict), los demás NO se
+    renumeran: {0: 12, 2: 18} debe etiquetarse T1 y T3, nunca T1 y T2."""
+    assert app.etiquetas_temas({0: 12, 2: 18}) == ["T1", "T3"]
+    assert app.etiquetas_temas({}) == []

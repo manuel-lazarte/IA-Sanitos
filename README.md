@@ -73,7 +73,7 @@ Se abre en `http://localhost:8501`. Flujo de uso:
 pytest
 ```
 
-Comportamiento esperado (44 pruebas en 8 archivos):
+Comportamiento esperado (47 pruebas en 8 archivos):
 
 | Archivo | Qué comprueba |
 |---|---|
@@ -86,7 +86,7 @@ Comportamiento esperado (44 pruebas en 8 archivos):
 | `test_integracion.py` | pipeline completo sobre el corpus demo: 6 temas por modelo, temas que reflejan el corpus, **determinismo** (dos ejecuciones = mismos temas) |
 | `test_app.py` | helpers de presentación de la interfaz |
 
-Salida esperada: `44 passed` en unos segundos.
+Salida esperada: `47 passed` en unos segundos.
 
 ## Regenerar el corpus demo
 
@@ -110,7 +110,7 @@ IA/
 │   ├── noticias_demo.csv      # Corpus sintético (30 noticias, 6 temas)
 │   ├── generar_noticias_demo.py
 │   └── LEEME.txt              # Aviso de datos sintéticos
-├── tests/                     # Pruebas pytest (8 archivos, 44 pruebas)
+├── tests/                     # Pruebas pytest (8 archivos, 47 pruebas)
 ├── docs/
 │   ├── explicacion_academica.md   # Guía para la exposición/defensa
 │   └── superpowers/           # Diseño y plan de implementación

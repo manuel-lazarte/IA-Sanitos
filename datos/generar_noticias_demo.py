@@ -199,7 +199,7 @@ Las 30 noticias de noticias_demo.csv son COMPLETAMENTE FICTICIAS:
 fueron generadas por este script (semilla 2026) para probar el
 prototipo. Los medios "Medio Demo 1" y "Medio Demo 2" no existen,
 las URLs apuntan al dominio de ejemplo demo.ejemplo y ningun texto
-provienen de un medio real.
+proviene de un medio real.
 
 Temas intencionales (5 noticias por tema): combustibles, agua/sequia,
 economia/precios, deportes, salud, educacion.

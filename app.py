@@ -59,6 +59,15 @@ def etiqueta_tema(id_tema: int, palabras: list[str], n: int = 5) -> str:
     return f"Tema {id_tema + 1} · " + ", ".join(palabras[:n])
 
 
+def etiquetas_temas(valores: dict) -> list[str]:
+    """Etiquetas del eje T<n> con los IDs REALES de los temas (1-based).
+
+    Nunca renumera por posición: si el tema 2 no tiene noticias
+    predominantes, las claves {0: .., 2: ..} se etiquetan T1 y T3.
+    """
+    return [f"T{k + 1}" for k in valores]
+
+
 def grafico_barras(valores: dict[str, float], titulo: str, color: str, horizontal: bool = False):
     """Barras sencillas con ejes y grilla tenues (una sola serie, sin leyenda)."""
     if horizontal:
@@ -69,7 +78,7 @@ def grafico_barras(valores: dict[str, float], titulo: str, color: str, horizonta
         ax.tick_params(axis="y", labelsize=9)
     else:
         fig, ax = plt.subplots(figsize=(6, 3))
-        ax.bar([f"T{i + 1}" for i in range(len(valores))], list(valores.values()),
+        ax.bar(etiquetas_temas(valores), list(valores.values()),
                color=color, width=0.6)
         ax.tick_params(axis="x", labelsize=9)
     ax.set_title(titulo, fontsize=11)
@@ -78,6 +87,13 @@ def grafico_barras(valores: dict[str, float], titulo: str, color: str, horizonta
     ax.set_axisbelow(True)
     fig.tight_layout()
     return fig
+
+
+def mostrar_grafico(fig):
+    """Muestra la figura y la CIERRA: sin esto, cada re-run de Streamlit
+    acumula figuras en el gestor global de matplotlib (requisito del plan)."""
+    st.pyplot(fig)
+    plt.close(fig)
 
 
 def _corpus_cargado() -> bool:
@@ -326,7 +342,7 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
                 vocab[int(i)]: float(componentes[i])
                 for i in componentes.argsort()[::-1][:10]
             }
-            st.pyplot(
+            mostrar_grafico(
                 grafico_barras(
                     pesos_palabras,
                     f"Peso de las palabras principales (tema {t['tema'] + 1})",
@@ -344,7 +360,7 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
 
     st.subheader("Distribución de documentos por tema predominante")
     distribucion = {t: float(n) for t, n in resumen["distribucion"].items()}
-    st.pyplot(
+    mostrar_grafico(
         grafico_barras(distribucion, f"{nombre_modelo}: noticias por tema predominante", color)
     )
     st.caption(
@@ -397,14 +413,14 @@ def pagina_comparacion():
     st.subheader("Distribución por tema predominante")
     col_c, col_d = st.columns(2)
     with col_c:
-        st.pyplot(
+        mostrar_grafico(
             grafico_barras(
                 {t: float(n) for t, n in resumen_lda["distribucion"].items()},
                 "LDA", COLOR_LDA,
             )
         )
     with col_d:
-        st.pyplot(
+        mostrar_grafico(
             grafico_barras(
                 {t: float(n) for t, n in resumen_nmf["distribucion"].items()},
                 "NMF", COLOR_NMF,

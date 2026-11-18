@@ -64,8 +64,10 @@ cada componente (tema) a cada documento** y la otra **qué peso tiene cada
 término en cada componente**. Al inspeccionar los términos de mayor peso de
 un componente, lo interpretamos como un tema. **Diferencia clave con LDA:**
 sus pesos son **coeficientes de una factorización algebraica, no
-probabilidades** (no vienen de un modelo generativo); solo los normalizamos
-para presentarlos como proporciones de peso.
+probabilidades** (no vienen de un modelo generativo). La app muestra esos
+pesos crudos; el módulo ofrece `normalizar_pesos()` para convertirlos en
+proporciones por documento (filas que suman 1) si se quiere leerlos como
+"reparto de peso", dejando claro que esa lectura es solo de presentación.
 **Informe:** 3.11. **Código:** `entrenar_nmf`, `normalizar_pesos` y el comentario en `src/modelos.py`; entrada generada por `construir_matriz_tfidf`.
 
 ## 7. ¿Qué función cumple TF-IDF?
@@ -120,9 +122,12 @@ La pertinencia final se confirma leyendo noticias representativas.
 Que el **ciclo completo funciona de punta a punta con resultados reales**:
 carga de CSV/TXT, preprocesamiento en español con lematización, dos
 representaciones numéricas comparables, entrenamiento real de LDA y NMF,
-descubrimiento de temas interpretables (el corpus sintético de 30 noticias
-recupera sus 6 temas), evaluación con métricas definidas y una interfaz
-Streamlit navegable. Las 44 pruebas de `tests/` —incluida una de
+descubrimiento de temas interpretables (con el corpus sintético de 30
+noticias, **NMF recupera con nitidez los 6 temas**, uno por grupo de 5
+noticias; **LDA los descubre de forma parcial y los mezcla** —p. ej.
+combustibles con salud—, lo que ilustra la diferencia de ambos modelos
+descrita en la pregunta 10), evaluación con métricas definidas y una
+interfaz Streamlit navegable. Las 47 pruebas de `tests/` —incluida una de
 **determinismo** (dos ejecuciones producen exactamente los mismos temas)—
 verifican que no hay resultados simulados.
 

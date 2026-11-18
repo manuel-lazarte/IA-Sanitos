@@ -30,6 +30,23 @@ def test_diversidad_vacia_es_cero():
     assert diversidad_tematica([]) == 0.0
 
 
+def test_ventanas_deslizantes_stride_uno():
+    """Ventanas de co-aparición con paso 1 (como gensim/Palmetto): más
+    casos de co-aparición que trozos no solapados (plan Task 7)."""
+    from src.evaluacion import _ventanas_por_documento
+
+    assert _ventanas_por_documento(["a b c d"], 2) == [
+        ["a", "b"], ["b", "c"], ["c", "d"],
+    ]
+
+
+def test_ventana_mayor_que_documento_es_una_sola():
+    from src.evaluacion import _ventanas_por_documento
+
+    assert _ventanas_por_documento(["a b"], 10) == [["a", "b"]]
+    assert _ventanas_por_documento(["a"], 10) == []  # un token no forma par
+
+
 def test_coherencia_tema_coherente_supera_a_cruzada(corpus_mini):
     """Palabras que co-ocurren en el corpus (temas reales) deben superar
     a pares cruzados de temas distintos (diésel con gol, etc.)."""
