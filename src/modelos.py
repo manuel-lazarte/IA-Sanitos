@@ -43,6 +43,13 @@ def _validar_entrada(matriz: spmatrix, n_temas: int) -> None:
             f"n_temas={n_temas}. Reduce el número de temas o agrega "
             "documentos (se recomienda al menos 3 documentos por tema)."
         )
+    if matriz.shape[1] < n_temas:
+        raise CorpusInsuficienteError(
+            f"Vocabulario insuficiente: la matriz tiene solo {matriz.shape[1]} "
+            f"términos útiles para n_temas={n_temas}. Esto pasa con corpus "
+            "muy cortos o muy repetitivos: agrega más documentos variados o "
+            "reduce el número de temas."
+        )
 
 
 def entrenar_lda(

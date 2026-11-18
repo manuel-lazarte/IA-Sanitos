@@ -96,3 +96,11 @@ def test_resumen_modelo_claves_completas(mini_lda_pesos, corpus_mini):
     assert len(primer["palabras"]) == 5
     assert sum(resumen["distribucion"].values()) == 8
     assert 0.0 <= resumen["diversidad"] <= 1.0
+
+
+def test_coherencia_palabras_ajenas_al_corpus_no_es_maxima(corpus_mini):
+    """NPMI con suavizado: pares totalmente ajenos al corpus NO deben recibir
+    la coherencia máxima (1.0) por artefacto del epsilon, sino la mínima."""
+    textos = procesar_corpus(corpus_mini)
+    valor = coherencia_npmi([["zzz", "qqq", "www"]], textos, n_palabras=3)
+    assert valor == -1.0

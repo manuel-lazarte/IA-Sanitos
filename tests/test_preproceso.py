@@ -64,3 +64,13 @@ def test_procesar_corpus_mismo_tamano():
     resultado = procesar_corpus(textos)
     assert len(resultado) == 3
     assert all(isinstance(t, str) for t in resultado)
+
+
+def test_texto_muy_largo_se_acota_sin_explotar():
+    """spaCy tiene un límite duro (~1M caracteres, error E088): los documentos
+    se acotan antes de procesar (ninguna noticia real lo alcanza)."""
+    from src.preproceso import _acotar_texto
+
+    enorme = "palabra " * 200_000  # ~1.4M caracteres
+    assert len(_acotar_texto(enorme)) <= 1_000_000
+    assert len(_acotar_texto("corto")) == 5

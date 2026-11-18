@@ -64,3 +64,114 @@ def test_carga_carpeta_txt(tmp_path):
     assert len(df) == 3
     assert set(df["medio"]) == {"Archivo TXT"}
     assert informe["validos"] == 3
+
+
+# --- Hallazgos de la batería de 5 agentes (correcciones) ---
+
+def test_fila_con_campo_de_mas_lanza_error_nombrando_linea(tmp_path):
+    """CRÍTICO: coma sin citar => fila desplazada en silencio. Debe rechazarse
+    nombrando la línea, no cargarse como válida."""
+    ruta = tmp_path / "corrupto.csv"
+    ruta.write_text(
+        "titulo,medio,fecha,url,contenido\n"
+        "t1,M,2026-11-01,u1,texto con coma, este texto final tiene seis palabras\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(DatosInvalidosError) as exc:
+        cargar_csv(ruta)
+    assert "2" in str(exc.value)  # la línea 2 (la primera de datos)
+
+
+def test_csv_solo_encabezados_lanza_error_claro(tmp_path):
+    ruta = tmp_path / "vacio.csv"
+    ruta.write_text("titulo,medio,fecha,url,contenido\n", encoding="utf-8")
+    with pytest.raises(DatosInvalidosError) as exc:
+        cargar_csv(ruta)
+    assert "sin filas" in str(exc.value).lower()
+
+
+def test_csv_sin_filas_validas_no_crashea(tmp_path):
+    """Todas inválidas + columna url toda vacía (dtype float en pandas):
+    debe devolver informe validos=0, no un AttributeError."""
+    ruta = tmp_path / "nada_valido.csv"
+    ruta.write_text(
+        "titulo,medio,fecha,url,contenido\n"
+        "t1,M,2026-11-01,,corta\n"
+        "t2,M,2026-11-02,,corta\n",
+        encoding="utf-8",
+    )
+    df, informe = cargar_csv(ruta)
+    assert len(df) == 0
+    assert informe["validos"] == 0
+
+
+def test_csv_cp1252_se_carga_con_tildes(tmp_path):
+    """CSV guardado por Excel en español (cp1252): debe cargar con tildes."""
+    ruta = tmp_path / "excel.csv"
+    ruta.write_bytes(
+        "titulo,medio,fecha,url,contenido\n"
+        "María leyó,Medio,2026-11-01,u1,"
+        "texto con tilde María participación año suficientemente largo\n".encode("cp1252")
+    )
+    df, _ = cargar_csv(ruta)
+    assert len(df) == 1
+    assert "María" in df.loc[0, "titulo"]
+
+
+def test_csv_separador_punto_y_coma_se_detecta(tmp_path):
+    ruta = tmp_path / "excel_es.csv"
+    ruta.write_text(
+        "titulo;medio;fecha;url;contenido\n"
+        "N1;Medio Demo 1;2026-11-01;u1;texto con suficiente cantidad de palabras aqui\n",
+        encoding="utf-8",
+    )
+    df, _ = cargar_csv(ruta)
+    assert len(df) == 1
+    assert df.loc[0, "titulo"] == "N1"
+
+
+def test_duplicados_con_espacios_internos_distintos(tmp_path):
+    largo = "uno dos tres cuatro cinco seis"
+    ruta = tmp_path / "dup_espacios.csv"
+    ruta.write_text(
+        "titulo,medio,fecha,url,contenido\n"
+        f"A,M,2026-11-01,u1,{largo}\n"
+        f"B,M,2026-11-02,u2,uno  dos  tres  cuatro  cinco  seis\n",
+        encoding="utf-8",
+    )
+    _, informe = cargar_csv(ruta)
+    assert informe["duplicados"] == 1
+
+
+def test_token_solo_puntuacion_no_cuenta_como_palabra(tmp_path):
+    ruta = tmp_path / "puntuacion.csv"
+    ruta.write_text(
+        "titulo,medio,fecha,url,contenido\n"
+        't1,M,2026-11-01,u1,"uno dos tres cuatro ,,,"\n',
+        encoding="utf-8",
+    )
+    _, informe = cargar_csv(ruta)
+    assert informe["invalidos"] == 1  # solo 4 palabras reales
+
+
+def test_carpeta_txt_mayusculas_detectadas(tmp_path):
+    (tmp_path / "NOTICIA.TXT").write_text(
+        "Texto con suficientes palabras para ser valido aqui dentro.", encoding="utf-8"
+    )
+    df, _ = cargar_carpeta_txt(tmp_path)
+    assert len(df) == 1
+
+
+def test_carpeta_inexistente_mensaje_diferente(tmp_path):
+    with pytest.raises(DatosInvalidosError) as exc:
+        cargar_carpeta_txt(tmp_path / "no_existe_123")
+    assert "no existe" in str(exc.value).lower()
+
+
+def test_txt_cp1252_sin_caracteres_de_reemplazo(tmp_path):
+    (tmp_path / "nota.txt").write_bytes(
+        "La calificación de María en España fue básicamente un éxito.".encode("cp1252")
+    )
+    df, _ = cargar_carpeta_txt(tmp_path)
+    assert "calificación" in df.loc[0, "contenido"]
+    assert "�" not in df.loc[0, "contenido"]

@@ -143,7 +143,7 @@ antes de la defensa para tener todo fresco.
 ## BLOQUE C — Implementación y desarrollo
 
 **21. ¿Cómo desarrollaron el agente paso a paso?**
-- **Corta:** Con desarrollo guiado por pruebas (TDD): definimos la arquitectura de 6 módulos, y para cada módulo escribimos primero la prueba que debía pasar, la vimos fallar, y después implementamos. Terminamos con 47 pruebas verdes y una revisión independiente.
+- **Corta:** Con desarrollo guiado por pruebas (TDD): definimos la arquitectura de 6 módulos, y para cada módulo escribimos primero la prueba que debía pasar, la vimos fallar, y después implementamos. Terminamos con 59 pruebas verdes y una revisión independiente.
 - **Técnica:** El orden fue: corpus demo → carga → preprocesamiento → representaciones → modelos → evaluación → pipeline → interfaz → documentación. Cada módulo tiene su archivo de pruebas con el mismo nombre.
 - **Ejemplo:** La prueba de tildes (`tests/test_preproceso.py:35`) exigía que «público» y «publicó» dieran términos distintos ANTES de escribir el preprocesador.
 - **Repregunta:** «¿Cómo garantizan que no hay resultados falsos?» → Hay una prueba de determinismo (`tests/test_integracion.py`): dos ejecuciones deben dar EXACTAMENTE los mismos temas; y todo número en pantalla sale de un modelo entrenado en esa sesión.
@@ -265,7 +265,7 @@ antes de la defensa para tener todo fresco.
 - **Repregunta:** «¿Y la parte "inteligente" es realmente inteligente?» → Es aprendizaje estadístico, no comprensión del lenguaje: no sabe qué es "diésel", solo que viaja con "gasolina". Es honesto decirlo y es exactamente por qué la revisión humana es parte del diseño.
 
 **40. ¿Qué tienen implementado actualmente y qué falta para terminar el proyecto?**
-- **Corta:** Implementado: pipeline completo real (carga, preprocesamiento español, representaciones comparables, LDA, NMF, evaluación NPMI/diversidad, interfaz, 47 pruebas, corpus sintético 30 noticias, documentación). Falta: corpus real 200–400 noticias, barrido del número de temas, coherencia Cv sobre corpus de referencia, protocolo de revisión humana a dos ciegas y BERTopic como ampliación.
+- **Corta:** Implementado: pipeline completo real (carga, preprocesamiento español, representaciones comparables, LDA, NMF, evaluación NPMI/diversidad, interfaz, 59 pruebas, corpus sintético 30 noticias, documentación). Falta: corpus real 200–400 noticias, barrido del número de temas, coherencia Cv sobre corpus de referencia, protocolo de revisión humana a dos ciegas y BERTopic como ampliación.
 - **Técnica:** Informe 4.4–4.5 y 3.12–3.13 definen ese roadmap; nada de lo mostrado hoy fue simulado: cada número sale de modelos entrenados en vivo y es reproducible con semilla 42.
 - **Ejemplo:** "Hoy entrenamos esto EN VIVO ante usted" es la mejor demostración: la app entrena en segundos ante el docente.
 - **Repregunta:** «¿Cuánto falta?» → El pipeline está; la fase restante es principalmente ADQUISICIÓN de corpus y protocolo de evaluación, no desarrollo nuevo de código.
@@ -361,7 +361,7 @@ Preguntas que la ingeniera podría hacer mirando el código (con respuesta):
 | k-means como contraste conceptual (3.8) | ⏳ Discutido, no implementado | Es contraste conceptual del informe, no requisito del prototipo |
 | BERTopic (3.12) | ❌ Opcional futuro | Informe: solo si hay codificador español y recursos |
 
-**Lo probado, con evidencia:** 47 pruebas pytest (todas pasan), prueba de determinismo (mismos temas en 2 ejecuciones), revisión independiente de código, y batería de 5 agentes de prueba adicionales. **Regla para la defensa:** nunca decir "resultados sobre prensa boliviana" — decir "resultados sobre el corpus sintético de demostración; el corpus real es la siguiente etapa".
+**Lo probado, con evidencia:** 59 pruebas pytest (todas pasan), prueba de determinismo (mismos temas en 2 ejecuciones), revisión independiente de código, y batería de 5 agentes de prueba adicionales. **Regla para la defensa:** nunca decir "resultados sobre prensa boliviana" — decir "resultados sobre el corpus sintético de demostración; el corpus real es la siguiente etapa".
 
 ---
 
@@ -383,8 +383,8 @@ Consejo de oral: responde en 3 tiempos — *qué es (1 frase) → cómo funciona
 - **¿Qué modelo?** LDA y NMF (scikit-learn), comparados sobre el mismo corpus.
 - **¿Qué técnica?** Topic modeling (PLN), exploratorio.
 - **¿Por qué no supervisado?** No hay etiquetas previas; se descubren temas, no se clasifican en clases conocidas.
-- **¿Cómo lo desarrollaron?** 6 módulos desacoplados con TDD: 47 pruebas; revisión independiente.
+- **¿Cómo lo desarrollaron?** 6 módulos desacoplados con TDD: 59 pruebas; revisión independiente.
 - **¿Cómo funciona internamente?** Carga → preproceso (spaCy, tildes preservadas) → conteos y TF-IDF → entrenamiento (semilla 42) → palabras/pesos/noticias → diversidad + NPMI → Streamlit.
 - **¿Cómo entrenaron?** LDA variacional batch (30 it.) sobre conteos; NMF CD con nndsvda (500 it.) sobre TF-IDF; semilla 42; validaciones previas.
 - **¿Qué resultados?** Demo: NMF 6 temas nítidos (div 1.000, coh 0.368); LDA mezclas (div 0.900, coh 0.130) — ambos reales y reproducibles.
-- **¿Cómo demuestran que funciona?** 47 pruebas + determinismo + entrenamiento EN VIVO ante el docente + todo el código y datos en GitHub.
+- **¿Cómo demuestran que funciona?** 59 pruebas + determinismo + entrenamiento EN VIVO ante el docente + todo el código y datos en GitHub.

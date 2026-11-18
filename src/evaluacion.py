@@ -74,10 +74,20 @@ def _estadisticas_coocurrencia(textos_procesados: list[str], ventana: int):
 
 
 def _npmi_par(w1: str, w2: str, total: int, n_pares, n_individual) -> float:
-    """NPMI de un par: PMI dividido por -log p(w1, w2), acotado a (-1, 1)."""
-    p12 = (n_pares.get(tuple(sorted((w1, w2))), 0) + EPS) / total
-    p1 = (n_individual.get(w1, 0) + EPS) / total
-    p2 = (n_individual.get(w2, 0) + EPS) / total
+    """NPMI de un par: PMI dividido por -log p(w1, w2), acotado a (-1, 1).
+
+    Caso especial: si NINGUNA de las dos palabras aparece en el corpus,
+    el suavizado daría NPMI = 1.0 por artefacto (p1 = p2 = p12 = eps);
+    sin evidencia alguna la coherencia del par es la mínima (-1.0).
+    """
+    n12 = n_pares.get(tuple(sorted((w1, w2))), 0)
+    n1 = n_individual.get(w1, 0)
+    n2 = n_individual.get(w2, 0)
+    if n1 == 0 and n2 == 0 and n12 == 0:
+        return -1.0
+    p12 = (n12 + EPS) / total
+    p1 = (n1 + EPS) / total
+    p2 = (n2 + EPS) / total
     return float(np.log(p12 / (p1 * p2)) / (-np.log(p12)))
 
 

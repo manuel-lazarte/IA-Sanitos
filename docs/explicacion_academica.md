@@ -127,7 +127,7 @@ noticias, **NMF recupera con nitidez los 6 temas**, uno por grupo de 5
 noticias; **LDA los descubre de forma parcial y los mezcla** —p. ej.
 combustibles con salud—, lo que ilustra la diferencia de ambos modelos
 descrita en la pregunta 10), evaluación con métricas definidas y una
-interfaz Streamlit navegable. Las 47 pruebas de `tests/` —incluida una de
+interfaz Streamlit navegable. Las 59 pruebas de `tests/` —incluida una de
 **determinismo** (dos ejecuciones producen exactamente los mismos temas)—
 verifican que no hay resultados simulados.
 

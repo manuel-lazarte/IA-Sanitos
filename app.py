@@ -175,11 +175,18 @@ def pagina_cargar():
                     if subido is None:
                         st.warning("Primero selecciona un archivo CSV.")
                         return
+                    # Escribir y CERRAR el temporal antes de leerlo: sin flush,
+                    # pandas abriría el archivo aún vacío (bug detectado en
+                    # pruebas). Se borra siempre en el finally.
                     with tempfile.NamedTemporaryFile(
                         suffix=".csv", delete=False
                     ) as tmp:
                         tmp.write(subido.getvalue())
-                        df, informe = cargar_csv(tmp.name)
+                        ruta_tmp = tmp.name
+                    try:
+                        df, informe = cargar_csv(ruta_tmp)
+                    finally:
+                        Path(ruta_tmp).unlink(missing_ok=True)
                     origen = "csv"
                 else:
                     subidos = st.session_state.get("_txt_subidos") or []

@@ -41,8 +41,18 @@ def obtener_nlp():
             f"Falta el modelo de español '{NOMBRE_MODELO}'. Instálalo con: "
             f"python -m spacy download {NOMBRE_MODELO}"
         ) from error
-    nlp.max_text_length = 2_000_000
     return nlp
+
+
+# spaCy rechaza textos de más de ~1M caracteres (error E088). Ninguna
+# noticia real se acerca; se acota por seguridad para no perder TODO el
+# corpus por un único documento patológico.
+MAX_CARACTERES_DOC = 900_000
+
+
+def _acotar_texto(texto: str, maximo: int = MAX_CARACTERES_DOC) -> str:
+    """Recorta documentos que superen el límite que acepta spaCy."""
+    return texto if len(texto) <= maximo else texto[:maximo]
 
 
 def limpiar_texto(texto: str) -> str:
@@ -69,7 +79,7 @@ def _token_aceptado(lemma: str, es_stop: bool) -> bool:
 def procesar_texto(texto: str) -> str:
     """Pipeline completo: devuelve los lemas útiles unidos por espacios."""
     nlp = obtener_nlp()
-    tokens = tokenizar(texto)
+    tokens = tokenizar(_acotar_texto(texto))
     if not tokens:
         return ""
     doc = nlp(" ".join(tokens))
@@ -84,7 +94,7 @@ def procesar_texto(texto: str) -> str:
 def procesar_corpus(textos: list[str]) -> list[str]:
     """Procesa todos los documentos en lote (más rápido que doc por doc)."""
     nlp = obtener_nlp()
-    limpios = [" ".join(tokenizar(t)) for t in textos]
+    limpios = [" ".join(tokenizar(_acotar_texto(t))) for t in textos]
     resultado: list[str] = []
     for doc in nlp.pipe(limpios, batch_size=32):
         lemas = [
@@ -97,7 +107,10 @@ def procesar_corpus(textos: list[str]) -> list[str]:
 
 
 def es_documento_valido(texto: str, min_palabras: int = 5) -> bool:
-    """Detecta documentos vacíos o demasiado cortos para aportar temas."""
+    """Detecta documentos vacíos o demasiado cortos para aportar temas.
+
+    Cuenta solo tokens con letras: ',,,' no es una palabra.
+    """
     if not isinstance(texto, str):
         return False
-    return len(texto.split()) >= min_palabras
+    return sum(1 for tok in texto.split() if any(c.isalpha() for c in tok)) >= min_palabras
