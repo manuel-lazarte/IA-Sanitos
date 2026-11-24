@@ -133,8 +133,12 @@ def _extracto(valor) -> str:
 def tabla_comparativa(pipeline: dict) -> pd.DataFrame:
     """Tabla lado a lado LDA / NMF / BERTopic (lo que no existe, '—')."""
     resumenes = pipeline["resumenes"]
-    bert = pipeline.get("bertopic")
-    bert_metricas = (bert or {}).get("metricas") or {}
+    bert = resumenes.get("BERTopic")
+    config_bert = (bert or {}).get("configuracion")
+    semilla_bert = (
+        config_bert.get("semilla") if isinstance(config_bert, dict)
+        else getattr(config_bert, "semilla", None)
+    )
     lda, nmf = resumenes["LDA"], resumenes["NMF"]
     # Todas las celdas como texto: evita tipos mezclados (int/str) que
     # rompen la conversión a Arrow al mostrar la tabla.
@@ -156,10 +160,12 @@ def tabla_comparativa(pipeline: dict) -> pd.DataFrame:
             ],
             "BERTopic": [
                 "Disponible" if bert else "Aún no disponible",
-                len(bert.get("temas") or []) if bert else "—",
-                _fmt(bert_metricas.get("coherencia")) if bert else "—",
-                _fmt(bert_metricas.get("diversidad"), 2) if bert else "—",
-                str(bert_metricas.get("semilla", "—")) if bert else "—",
+                bert.get("n_temas") if bert else "—",
+                # NPMI pendiente: sus descriptores llevan bigramas sin
+                # lematizar y no son comparables con LDA/NMF (informe BERTopic).
+                ("Pendiente*" if bert else "—"),
+                _fmt(bert.get("diversidad"), 2) if bert else "—",
+                str(semilla_bert if semilla_bert is not None else "—") if bert else "—",
             ],
         },
         index=["Estado", "Nº de temas", "Coherencia NPMI", "Diversidad", "Semilla"],
@@ -180,11 +186,25 @@ def _pipeline_ejecutado() -> bool:
     return st.session_state.get("pipeline") is not None
 
 
-def _entrenar(df: pd.DataFrame, n_temas: int) -> bool:
+def _entrenar(df: pd.DataFrame, n_temas: int, incluir_bertopic: bool = False) -> bool:
     """Ejecuta el pipeline una vez y lo guarda en sesión. Devuelve True si salió bien."""
-    with st.spinner("Preprocesando textos y entrenando LDA y NMF (una sola vez)…"):
+    with st.spinner(
+        "Preprocesando textos y entrenando LDA y NMF"
+        + (" y BERTopic (puede tardar: descarga embeddings)" if incluir_bertopic else "")
+        + " (una sola vez)…"
+    ):
         try:
-            pipeline = ejecutar_pipeline(df, n_temas=int(n_temas))
+            kwargs = {"modelos": ("LDA", "NMF", "BERTopic")} if incluir_bertopic else {}
+            pipeline = ejecutar_pipeline(df, n_temas=int(n_temas), **kwargs)
+        except ModuleNotFoundError as error:
+            faltante = getattr(error, "name", None) or "un paquete opcional"
+            st.error(
+                "BERTopic necesita el paquete opcional que falta: "
+                f"'{faltante}'. Instálalo con: pip install -r requirements-bertopic.txt "
+                "(se recomienda Python 3.11-3.12; el análisis LDA/NMF sigue "
+                "disponible sin BERTopic)."
+            )
+            return False
         except CorpusInsuficienteError as error:
             # El mensaje ya explica la causa y la solución (agregar docs o bajar temas).
             st.error(str(error))
@@ -359,8 +379,15 @@ def paso_analizar():
         "El preprocesamiento (lematización en español) se ejecuta dentro de este paso."
     )
 
+    st.checkbox(
+        "Incluir BERTopic (ruta semántica opcional; requiere instalar "
+        "`pip install -r requirements-bertopic.txt`, recomendado Python 3.11-3.12)",
+        key="incluir_bertopic",
+    )
+
     if st.button("Analizar noticias", type="primary", key="btn_analizar"):
-        if _entrenar(st.session_state["df"], st.session_state.get("n_temas", N_TEMAS_DEFECTO)):
+        if _entrenar(st.session_state["df"], st.session_state.get("n_temas", N_TEMAS_DEFECTO),
+                     incluir_bertopic=st.session_state.get("incluir_bertopic", False)):
             st.success("Análisis completo: LDA y NMF entrenados sobre el mismo corpus.")
 
     if not _pipeline_ejecutado():
@@ -669,7 +696,8 @@ def _detalles_metodologicos(pipeline: dict, res: dict | None) -> None:
                 f"Re-analizar con {int(n_temas)} temas",
                 key="btn_reanalizar",
             ):
-                if _entrenar(pipeline["df"], int(n_temas)):
+                if _entrenar(pipeline["df"], int(n_temas),
+                             incluir_bertopic=st.session_state.get("incluir_bertopic", False)):
                     # Aviso diferido: st.rerun() borra lo que se pinte ahora.
                     st.session_state["_aviso_reanalizado"] = int(n_temas)
                     st.rerun()

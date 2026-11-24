@@ -87,10 +87,88 @@ def test_cargar_resultados_nmf_usa_tfidf(pipeline_falso):
     assert salida["resumen"]["nombre"] == "NMF"
 
 
-def test_bertopic_no_tiene_funcionalidad(pipeline_falso):
-    """BERTopic es el único método sin conexión: siempre None (sin cifras)."""
+def test_bertopic_sin_entrenar_sigue_siendo_none(pipeline_falso):
+    """Sin BERTopic en el pipeline, la UI no inventa resultados."""
     assert adaptadores.cargar_resultados(pipeline_falso, "BERTopic") is None
     assert adaptadores.obtener_resultados_bertopic(pipeline_falso) is None
+
+
+def test_bertopic_entrenado_devuelve_estructura_comun(pipeline_falso):
+    """Con BERTopic entrenado, obtener_resultados_bertopic expone la misma
+    estructura que LDA/NMF más los datos propios (asignaciones, temas)."""
+    resumen_bert = {
+        "nombre": "BERTopic", "n_documentos": 3, "n_temas": 2,
+        "temas": [
+            {"tema": 0, "palabras": ["agua", "sequía"], "pesos_ctfidf": [0.5, 0.3],
+             "doc_ids": [0, 1], "representativos": [0], "coherencia": None},
+            {"tema": 4, "palabras": ["gol", "partido"], "pesos_ctfidf": [0.4, 0.2],
+             "doc_ids": [2], "representativos": [2], "coherencia": None},
+        ],
+        "asignaciones": [0, 0, 4],
+        "atipicos": {"cantidad": 0, "porcentaje": 0.0, "doc_ids": []},
+    }
+    pipeline_bert = dict(pipeline_falso)
+    pipeline_bert["resumenes"] = dict(pipeline_falso["resumenes"], BERTopic=resumen_bert)
+
+    res = adaptadores.obtener_resultados_bertopic(pipeline_bert)
+    assert res is not None
+    assert res["metodo"] == "BERTopic"
+    assert res["resumen"]["n_temas"] == 2
+    # Columnas por id crudo de tema: los ids 1..3 existen aunque vacíos.
+    assert res["pesos"].shape == (3, 5)
+    assert res["pesos"][0, 0] == 1.0 and res["pesos"][2, 4] == 1.0
+
+
+def test_conteo_bertopic_no_cuenta_atipicos_como_tema_cero(pipeline_falso):
+    """Los atípicos (-1) no se suman a ningún tema: columna dedicada al final."""
+    resumen_bert = {
+        "nombre": "BERTopic", "n_documentos": 4, "n_temas": 1,
+        "temas": [{"tema": 0, "palabras": ["a", "b"], "pesos_ctfidf": [1, 0],
+                   "doc_ids": [0], "representativos": [], "coherencia": None}],
+        "asignaciones": [0, -1, 0, -1],
+    }
+    pipeline_bert = dict(pipeline_falso)
+    pipeline_bert["resumenes"] = dict(pipeline_falso["resumenes"], BERTopic=resumen_bert)
+    res = adaptadores.obtener_resultados_bertopic(pipeline_bert)
+
+    import numpy as np
+
+    conteos = adaptadores.conteo_por_tema(res["pesos"], np.array([0, 1, 2, 3]),
+                                          asignaciones=res["asignaciones"])
+    assert conteos[:1] == [2]   # tema 0: dos noticias
+    assert conteos[-1] == 2     # atípicos: columna propia
+
+
+def test_noticias_representativas_bertopic_usa_representativos_y_sin_peso(pipeline_falso):
+    resumen_bert = {
+        "nombre": "BERTopic", "n_documentos": 3, "n_temas": 1,
+        "temas": [{"tema": 0, "palabras": ["a"], "pesos_ctfidf": [1],
+                   "doc_ids": [0, 2], "representativos": [2], "coherencia": None}],
+        "asignaciones": [0, -1, 0],
+    }
+    pipeline_bert = dict(pipeline_falso)
+    pipeline_bert["resumenes"] = dict(pipeline_falso["resumenes"], BERTopic=resumen_bert)
+    res = adaptadores.obtener_resultados_bertopic(pipeline_bert)
+
+    import numpy as np
+
+    reps = adaptadores.noticias_representativas(res, np.array([0, 2]), tema=0, n=3)
+    assert reps[0] == (2, None)  # el representativo real va primero, sin peso inventado
+
+
+def test_pesos_palabras_bertopic_usa_pesos_ctfidf(pipeline_falso):
+    resumen_bert = {
+        "nombre": "BERTopic", "n_documentos": 2, "n_temas": 1,
+        "temas": [{"tema": 0, "palabras": ["agua", "riego"], "pesos_ctfidf": [0.7, 0.2],
+                   "doc_ids": [0, 1], "representativos": [], "coherencia": None}],
+        "asignaciones": [0, 0],
+    }
+    pipeline_bert = dict(pipeline_falso)
+    pipeline_bert["resumenes"] = dict(pipeline_falso["resumenes"], BERTopic=resumen_bert)
+    res = adaptadores.obtener_resultados_bertopic(pipeline_bert)
+
+    pesos = adaptadores.pesos_palabras(res, tema=0, n=2)
+    assert list(pesos.items()) == [("agua", 0.7), ("riego", 0.2)]
 
 
 def test_metodo_desconocido_no_cuelga_datos_de_otro(pipeline_falso):
@@ -217,3 +295,24 @@ def test_tabla_comparativa_muestra_bertopic_como_no_disponible(pipeline_falso):
     assert tabla.loc["Estado", "BERTopic"] == "Aún no disponible"
     assert tabla.loc["Coherencia NPMI", "BERTopic"] == "—"
     assert tabla.loc["Nº de temas", "LDA"] == "2"  # texto: tipos homogéneos
+
+
+def test_tabla_comparativa_bertopic_entrenado_muestra_resumen(pipeline_falso):
+    resumen_bert = {
+        "nombre": "BERTopic", "n_documentos": 3, "n_temas": 5,
+        "temas": [{"tema": i, "palabras": ["a"], "pesos_ctfidf": [1],
+                   "doc_ids": [], "representativos": [], "coherencia": None}
+                  for i in range(5)],
+        "asignaciones": [0, 1, 2],
+        "atipicos": {"cantidad": 0, "porcentaje": 0.0, "doc_ids": []},
+        "diversidad": 0.87,
+        "coherencia": None,
+        "nota_evaluacion": "NPMI pendiente",
+        "configuracion": {"semilla": 42},
+    }
+    pipeline_bert = dict(pipeline_falso)
+    pipeline_bert["resumenes"] = dict(pipeline_falso["resumenes"], BERTopic=resumen_bert)
+    tabla = app.tabla_comparativa(pipeline_bert)
+    assert tabla.loc["Estado", "BERTopic"] == "Disponible"
+    assert tabla.loc["Nº de temas", "BERTopic"] == "5"
+    assert tabla.loc["Diversidad", "BERTopic"] == "0.87"

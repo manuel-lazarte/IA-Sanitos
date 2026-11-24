@@ -22,12 +22,38 @@ DESCRIPCIONES = {
 
 
 def obtener_resultados_bertopic(pipeline: dict) -> dict | None:
-    """PUNTO DE CONEXIÓN con BERTopic (otro frente). Hoy devuelve None.
+    """PUNTO DE CONEXIÓN con BERTopic: mismo contrato que LDA/NMF.
 
-    Cuando exista, debe devolver la misma estructura que `cargar_resultados`
-    para LDA/NMF (más las noticias atípicas) y la UI activará la opción sola.
+    Devuelve None si el pipeline no incluye BERTopic. Las diferencias del
+    método se respetan (no se inventan cifras):
+    - pesos: matriz binaria doc-tema indexada por el ID CRUDO de tema de
+      BERTopic; los atípicos (-1) no suman a ningún tema.
+    - noticias representativas: las que el propio modelo señala, sin peso
+      relativo (ver noticias_representativas).
+    - palabras: pesos c-TF-IDF reales por tema (ver pesos_palabras).
     """
-    return None
+    resumen = pipeline.get("resumenes", {}).get("BERTopic")
+    if resumen is None:
+        return None
+    n_docs = resumen.get("n_documentos") or 0
+    temas = resumen.get("temas") or []
+    asignaciones = resumen.get("asignaciones") or []
+    n_columnas = max([t["tema"] for t in temas] + [0]) + 1 if temas else 1
+    pesos = np.zeros((n_docs, n_columnas))
+    for doc, tema in enumerate(asignaciones):
+        if 0 <= tema < n_columnas:
+            pesos[doc, tema] = 1.0
+    return {
+        "metodo": "BERTopic",
+        "resumen": resumen,
+        "pesos": pesos,
+        "proporciones": pesos,  # asignación binaria, no probabilidades
+        "vocabulario": None,
+        "componentes": None,
+        "temas": temas,
+        "asignaciones": asignaciones,
+        "representativos_por_tema": {t["tema"]: t["representativos"] for t in temas},
+    }
 
 
 def cargar_resultados(pipeline: dict, metodo: str) -> dict | None:
@@ -73,21 +99,48 @@ def filtrar_noticias(df: pd.DataFrame, medios=None, rango=None, texto: str = "")
     return np.flatnonzero(mascara.to_numpy())
 
 
-def conteo_por_tema(pesos: np.ndarray, indices: np.ndarray) -> list[int]:
-    """Noticias (entre las filtradas) cuyo tema predominante es cada tema."""
+def conteo_por_tema(
+    pesos: np.ndarray, indices: np.ndarray, asignaciones: list[int] | None = None
+) -> list[int]:
+    """Noticias (entre las filtradas) cuyo tema predominante es cada tema.
+
+    Con `asignaciones` (BERTopic) se cuenta por ID crudo de tema y los
+    atípicos (-1) no se suman a ningún tema.
+    """
     if len(indices) == 0:
         return [0] * pesos.shape[1]
+    if asignaciones is not None:
+        return [sum(asignaciones[i] == k for i in indices) for k in range(pesos.shape[1])]
     predominantes = pesos[indices].argmax(axis=1)
     return np.bincount(predominantes, minlength=pesos.shape[1]).tolist()
 
 
 def noticias_representativas(res: dict, indices: np.ndarray, tema: int, n: int = 3):
-    """[(posición, peso relativo)] de las noticias con más peso en el tema."""
+    """[(posición, peso relativo)] de las noticias con más peso en el tema.
+
+    Para BERTopic: las que el modelo señala como representativas (sin peso
+    relativo — None —, porque HDBSCAN no produce pesos por noticia).
+    """
+    representativos = res.get("representativos_por_tema")
+    if representativos is not None:
+        dentro = set(indices.tolist())
+        elegidos = [i for i in representativos.get(tema, []) if i in dentro][:n]
+        return [(int(i), None) for i in elegidos]
     orden = indices[np.argsort(res["pesos"][indices, tema])[::-1]][:n]
     return [(int(i), float(res["proporciones"][i, tema])) for i in orden]
 
 
 def pesos_palabras(res: dict, tema: int, n: int = 10) -> dict[str, float]:
-    """Palabras principales del tema con su peso en el modelo."""
+    """Palabras principales del tema con su peso en el modelo.
+
+    Para BERTopic: los pesos c-TF-IDF reales que guardó el resumen.
+    """
+    temas = res.get("temas")
+    if temas is not None:
+        tema_datos = next((t for t in temas if t["tema"] == tema), None)
+        if tema_datos is None:
+            return {}
+        pares = list(zip(tema_datos["palabras"], tema_datos["pesos_ctfidf"]))[:n]
+        return {p: float(w) for p, w in pares}
     comp = res["componentes"][tema]
     return {res["vocabulario"][int(i)]: float(comp[i]) for i in comp.argsort()[::-1][:n]}

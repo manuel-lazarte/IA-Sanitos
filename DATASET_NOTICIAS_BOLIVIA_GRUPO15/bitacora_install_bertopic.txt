@@ -1,0 +1,154 @@
+Collecting bertopic==0.17.4 (from -r requirements-bertopic.txt (line 2))
+  Downloading bertopic-0.17.4-py3-none-any.whl.metadata (24 kB)
+Collecting sentence-transformers==5.1.2 (from -r requirements-bertopic.txt (line 3))
+  Downloading sentence_transformers-5.1.2-py3-none-any.whl.metadata (16 kB)
+Collecting umap-learn==0.5.9.post2 (from -r requirements-bertopic.txt (line 4))
+  Downloading umap_learn-0.5.9.post2-py3-none-any.whl.metadata (25 kB)
+Collecting hdbscan==0.8.40 (from -r requirements-bertopic.txt (line 5))
+  Downloading hdbscan-0.8.40.tar.gz (6.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.9/6.9 MB 4.6 MB/s  0:00:01
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting scikit-learn==1.7.2 (from -r requirements-bertopic.txt (line 7))
+  Downloading scikit_learn-1.7.2.tar.gz (7.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.2/7.2 MB 4.7 MB/s  0:00:01
+  Installing build dependencies: started
+  Installing build dependencies: still running...
+  Installing build dependencies: finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × installing build dependencies for scikit-learn did not run successfully.
+  │ exit code: 1
+  ╰─> [123 lines of output]
+      Collecting meson-python<0.19.0,>=0.16.0
+        Downloading meson_python-0.18.0-py3-none-any.whl.metadata (2.8 kB)
+      Collecting Cython<3.2.0,>=3.0.10
+        Downloading cython-3.1.8-py3-none-any.whl.metadata (3.9 kB)
+      Collecting numpy<2.4.0,>=2
+        Downloading numpy-2.3.5.tar.gz (20.6 MB)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.6/20.6 MB 5.2 MB/s  0:00:04
+        Installing build dependencies: started
+        Installing build dependencies: finished with status 'done'
+        Getting requirements to build wheel: started
+        Getting requirements to build wheel: finished with status 'done'
+        Installing backend dependencies: started
+        Installing backend dependencies: finished with status 'done'
+        Preparing metadata (pyproject.toml): started
+        Preparing metadata (pyproject.toml): finished with status 'done'
+      Collecting scipy<1.17.0,>=1.8.0
+        Downloading scipy-1.16.3.tar.gz (30.6 MB)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 30.6/30.6 MB 5.3 MB/s  0:00:05
+        Installing build dependencies: started
+        Installing build dependencies: finished with status 'done'
+        Getting requirements to build wheel: started
+        Getting requirements to build wheel: finished with status 'done'
+        Installing backend dependencies: started
+        Installing backend dependencies: finished with status 'done'
+        Preparing metadata (pyproject.toml): started
+        Preparing metadata (pyproject.toml): finished with status 'error'
+        error: subprocess-exited-with-error
+      
+        × Preparing metadata (pyproject.toml) did not run successfully.
+        │ exit code: 1
+        ╰─> [82 lines of output]
+            + meson setup /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026 /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/.mesonpy-0aaegi7l -Dbuildtype=release -Db_ndebug=if-release -Db_vscrt=md --native-file=/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/.mesonpy-0aaegi7l/meson-python-native-file.ini
+            The Meson build system
+            Version: 1.12.1
+            Source dir: /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026
+            Build dir: /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/.mesonpy-0aaegi7l
+            Build type: native build
+            Project name: scipy
+            Project version: 1.16.3
+            C compiler for the host machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.1.1.101)")
+            C linker for the host machine: cc ld64 1267
+            C++ compiler for the host machine: c++ (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.1.1.101)")
+            C++ linker for the host machine: c++ ld64 1267
+            Cython compiler for the host machine: cython (cython 3.1.8)
+            Host machine cpu family: aarch64
+            Host machine cpu: aarch64
+            Program python found: YES (/Users/manuellazarteascuy/Documents/IA/.venv/bin/python3.15)
+            Found pkg-config: YES (/opt/homebrew/bin/pkg-config) 2.5.1
+            Run-time dependency python found: YES 3.15
+            Program cython found: YES (/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-build-env-osfeu1ue/overlay/bin/cython)
+            Compiler for C supports arguments -Wno-unused-but-set-variable: YES
+            Compiler for C supports arguments -Wno-unused-function: YES
+            Compiler for C supports arguments -Wno-conversion: YES
+            Compiler for C supports arguments -Wno-misleading-indentation: YES
+            Library m found: YES
+            Fortran compiler for the host machine: gfortran (gcc 15.2.0 "GNU Fortran (Homebrew GCC 15.2.0) 15.2.0")
+            Fortran linker for the host machine: gfortran ld64 1267
+            ../meson.build:94: WARNING: Consider using the built-in option for language standard version instead of using "-std=legacy".
+            Compiler for Fortran supports arguments -Wno-conversion: YES
+            Compiler for C supports link arguments -Wl,-dead_strip: YES
+            Checking if "-Wl,--version-script" links: NO
+            Program tools/generate_f2pymod.py found: YES (/Users/manuellazarteascuy/Documents/IA/.venv/bin/python3.15 /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/tools/generate_f2pymod.py)
+            Program scipy/_build_utils/tempita.py found: YES (/Users/manuellazarteascuy/Documents/IA/.venv/bin/python3.15 /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/scipy/_build_utils/tempita.py)
+            Program pythran found: YES 0.18.1 0.18.1 (/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-build-env-osfeu1ue/overlay/bin/pythran)
+            Found CMake: /opt/homebrew/bin/cmake (4.1.0)
+            Run-time dependency xsimd found: NO  (tried pkg-config, framework and cmake)
+      
+            Executing subproject xsf for machine: host
+      
+            xsf| Project name: xsf
+            xsf| Project version: 0.1.3
+            xsf| C++ compiler for the host machine: c++ (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.1.1.101)")
+            xsf| C++ linker for the host machine: c++ ld64 1267
+            xsf| Build targets in project: 0
+            xsf| Subproject xsf finished.
+      
+      
+            Executing subproject boost_math for machine: host
+      
+            boost_math| Project name: boost-math
+            boost_math| Project version: 1.88.0
+            boost_math| Build targets in project: 0
+            boost_math| Subproject boost_math finished.
+      
+      
+            Executing subproject qhull_r for machine: host
+      
+            qhull_r| Project name: qhull_r
+            qhull_r| Project version: 8.0.2
+            qhull_r| C compiler for the host machine: cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.1.1.101)")
+            qhull_r| C linker for the host machine: cc ld64 1267
+            qhull_r| Compiler for C supports arguments -Wno-unused-but-set-variable: YES (cached)
+            qhull_r| Build targets in project: 1
+            qhull_r| Subproject qhull_r finished.
+      
+            Run-time dependency threads found: YES
+            numpy-config found: YES (/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-build-env-osfeu1ue/overlay/bin/numpy-config) 2.5.5
+            Run-time dependency numpy found: YES 2.5.5
+            Library npymath found: YES
+            pybind11-config found: YES (/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-build-env-osfeu1ue/overlay/bin/pybind11-config) 3.0.4
+            Run-time dependency pybind11 found: YES 3.0.4
+            Checking if "thread_local" compiles: NO
+            Checking if "_Thread_local" compiles: YES
+            Checking if "__thread" compiles: YES
+            Configuring scipy_config.h using configuration
+            Program f2py found: YES (/private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-build-env-osfeu1ue/overlay/bin/f2py)
+            Run-time dependency scipy-openblas found: NO  (tried pkg-config)
+            Run-time dependency openblas found: NO  (tried pkg-config, framework and cmake)
+            Run-time dependency openblas found: NO  (tried pkg-config, framework and cmake)
+      
+            ../scipy/meson.build:274:9: ERROR: Dependency "OpenBLAS" not found (tried pkg-config, framework and cmake)
+      
+            A full log can be found at /private/var/folders/t2/92s24k0x3bd8b2_wj1c_3bk40000gn/T/pip-install-z23j24fu/scipy_ff551c2ddcfb4c3d9ae6219fefd67026/.mesonpy-0aaegi7l/meson-logs/meson-log.txt
+            [end of output]
+      
+        note: This error originates from a subprocess, and is likely not a problem with pip.
+      error: metadata-generation-failed
+      
+      × Encountered error while generating package metadata.
+      ╰─> scipy
+      
+      note: This is an issue with the package mentioned above, not pip.
+      hint: See above for details.
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+ERROR: Failed to build 'scikit-learn' when installing build dependencies for scikit-learn
+exit=1
