@@ -1,2 +1,11 @@
 W1124 14:24:57.438000 6728 torch/distributed/elastic/multiprocessing/redirects.py:35] NOTE: Redirects are currently not supported in MacOs.
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 21134.54it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (3249 > 512). Running this sequence through the model will result in indexing errors
+=== LAS TRES RUTAS sobre 388 noticias reales ===
+LDA: 6 temas | diversidad=0.8166666666666667
+   T1: minero, paz, actividad, educación, propuesta, bolivia, estudiante, noviembre
+NMF: 6 temas | diversidad=1.0
+   T1: bolivia, país, internacional, millón, paz, reunión, inversión, cooperación
+BERTopic: 32 temas | diversidad=0.928125 | atípicos: 83 (2139%)
+   T1: equipo, partido, blooming, torneo, márquez, bolívar, marc, marc márquez
