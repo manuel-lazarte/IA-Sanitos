@@ -78,12 +78,12 @@ def ejecutar_pipeline(
         raise ValueError("modelos debe contener LDA, NMF y/o BERTopic.")
     _validar_corpus(df, n_temas, requiere_temas=bool(set(modelos) & {"LDA", "NMF"}))
 
-    if textos_procesados is None:
-        textos_procesados = procesar_corpus(df["contenido"].fillna("").astype(str).tolist())
-
     if set(modelos) != {"LDA", "NMF"}:
         resultado = {"df": df, "resumenes": {}}
         if set(modelos) & {"LDA", "NMF"}:
+            # Preproceso perezoso: la ruta solo-semántica (BERTopic) no paga spaCy.
+            if textos_procesados is None:
+                textos_procesados = procesar_corpus(df["contenido"].fillna("").astype(str).tolist())
             resultado["textos_procesados"] = textos_procesados
             for nombre, clave, construir, entrenar in (
                 ("LDA", "conteos", construir_matriz_conteos, entrenar_lda),
@@ -105,6 +105,9 @@ def ejecutar_pipeline(
             resultado["bertopic"] = modelo
             resultado["resumenes"]["BERTopic"] = resumen
         return resultado
+
+    if textos_procesados is None:
+        textos_procesados = procesar_corpus(df["contenido"].fillna("").astype(str).tolist())
 
     # Ruta A: conteos para LDA. Ruta B: TF-IDF para NMF (mismo corpus,
     # vocabulario comparable por parámetros compartidos).
