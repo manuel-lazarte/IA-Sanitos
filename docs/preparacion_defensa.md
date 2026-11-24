@@ -320,32 +320,32 @@ Dónde está cada cosa (verificadas en el código entregado):
 
 | ¿Dónde…? | Archivo | Función | Línea |
 |---|---|---|---|
-| Se cargan las noticias (CSV) | src/carga_datos.py | `cargar_csv` | 63 |
-| Se cargan TXT | src/carga_datos.py | `cargar_carpeta_txt` | 83 |
-| Se validan/descartan vacíos y duplicados | src/carga_datos.py | `_limpiar_dataframe` | 37 |
-| Se limpian los textos (minúsculas, URLs, signos) | src/preproceso.py | `limpiar_texto` | 48 |
-| Se tokeniza | src/preproceso.py | `tokenizar` | 57 |
-| Pipeline completo de preprocesamiento (lemas) | src/preproceso.py | `procesar_texto` / `procesar_corpus` | 69 / 84 |
-| Se decide si un documento es válido | src/preproceso.py | `es_documento_valido` | 99 |
+| Se cargan las noticias (CSV) | src/carga_datos.py | `cargar_csv` | 152 |
+| Se cargan TXT | src/carga_datos.py | `cargar_carpeta_txt` | 160 |
+| Se validan/descartan vacíos y duplicados | src/carga_datos.py | `_limpiar_dataframe` | 119 |
+| Se limpian los textos (minúsculas, URLs, signos) | src/preproceso.py | `limpiar_texto` | 60 |
+| Se tokeniza | src/preproceso.py | `tokenizar` | 69 |
+| Pipeline completo de preprocesamiento (lemas) | src/preproceso.py | `procesar_texto` / `procesar_corpus` | 92 / 100 |
+| Se decide si un documento es válido | src/preproceso.py | `es_documento_valido` | 107 |
 | CountVectorizer (entrada LDA) | src/representacion.py | `construir_matriz_conteos` | 49 |
 | TF-IDF (entrada NMF) | src/representacion.py | `construir_matriz_tfidf` | 54 |
-| Parámetros del vocabulario compartido | src/representacion.py | `PARAMS_VOCABULARIO` | 23 |
-| Se entrena LDA | src/modelos.py | `entrenar_lda` | 48 |
-| Se entrena NMF | src/modelos.py | `entrenar_nmf` | 65 |
-| Palabras por tema | src/modelos.py | `palabras_por_tema` | 82 |
-| Pesos documento-tema | src/modelos.py | `pesos_documento` | 91 |
+| Parámetros del vocabulario compartido | src/representacion.py | `PARAMS_VOCABULARIO` | 24 |
+| Se entrena LDA | src/modelos.py | `entrenar_lda` | 55 |
+| Se entrena NMF | src/modelos.py | `entrenar_nmf` | 72 |
+| Palabras por tema | src/modelos.py | `palabras_por_tema` | 89 |
+| Pesos documento-tema | src/modelos.py | `pesos_documento` | 98 |
 | Diversidad temática | src/evaluacion.py | `diversidad_tematica` | 27 |
-| Coherencia NPMI (ventanas) | src/evaluacion.py | `coherencia_npmi` / `_ventanas_por_documento` | 84 / 38 |
-| Resumen de evaluación de un modelo | src/evaluacion.py | `resumen_modelo` | 116 |
-| Orquestador de las 6 etapas | src/pipeline.py | `ejecutar_pipeline` | 27 |
-| Botón de cargar / procesar / entrenar | app.py | `pagina_cargar` / `pagina_preproceso` / `_pagina_modelo` | 167 / 241 / 298 |
-| Slider de número de temas | app.py | `_pagina_modelo` | 295 |
-| Tabla y etiquetas de temas (presentación) | app.py | `tabla_temas` / `etiqueta_tema` | 41 / 57 |
-| Navegación de la app | app.py | `main` | 439 |
+| Coherencia NPMI (ventanas) | src/evaluacion.py | `coherencia_npmi` / `_ventanas_por_documento` | 110 / 38 |
+| Resumen de evaluación de un modelo | src/evaluacion.py | `resumen_modelo` | 131 |
+| Orquestador de las 6 etapas | src/pipeline.py | `ejecutar_pipeline` | 50 |
+| Botón de cargar / procesar / entrenar | app.py | `pagina_cargar` / `pagina_preproceso` / `_pagina_modelo` | 192 / 275 / 318 |
+| Slider de número de temas | app.py | `_pagina_modelo` | 326 |
+| Tabla y etiquetas de temas (presentación) | app.py | `tabla_temas` / `etiqueta_tema` | 61 / 77 |
+| Navegación de la app | app.py | `main` | 463 |
 
 Preguntas que la ingeniera podría hacer mirando el código (con respuesta):
 
-- **«¿Por qué dos vectorizadores si el vocabulario debe ser comparable?»** → Porque comparar modelos exige que solo cambie el modelo; por eso ambos comparten `PARAMS_VOCABULARIO` (representacion.py:23) y hay una prueba que exige vocabularios idénticos.
+- **«¿Por qué dos vectorizadores si el vocabulario debe ser comparable?»** → Porque comparar modelos exige que solo cambie el modelo; por eso ambos comparten `PARAMS_VOCABULARIO` (representacion.py:24) y hay una prueba que exige vocabularios idénticos.
 - **«¿Por qué `learning_method="batch"`?»** → Con corpus pequeños el método batch es determinista y estable con semilla; el online está pensado para corpus enormes.
 - **«¿Dónde evitarían que un tema "aparezca" sin haberse entrenado?»** → No se puede: los temas se construyen en `fit()`; la UI solo lee `components_` y `transform()`. No hay ningún valor hardcodeado de temas.
 - **«¿Esta línea qué hace?» (evaluacion.py:76 `_npmi_par`)** → Calcula la NPMI de un par: PMI normalizado por −log p(w1,w2), con suavizado 1e-12 para pares nunca vistos; queda acotada a (−1, 1).

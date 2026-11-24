@@ -19,7 +19,7 @@ from itertools import combinations
 
 import numpy as np
 
-from src.modelos import palabras_por_tema, tema_predominante
+from src.modelos import palabras_por_tema, pesos_documento, tema_predominante
 
 EPS = 1e-12
 
@@ -91,6 +91,22 @@ def _npmi_par(w1: str, w2: str, total: int, n_pares, n_individual) -> float:
     return float(np.log(p12 / (p1 * p2)) / (-np.log(p12)))
 
 
+def _npmi_media(
+    temas: list[list[str]], estadisticas, n_palabras: int
+) -> float:
+    """NPMI media de todos los pares de palabras principales de `temas`,
+    usando estadísticas de co-aparición ya calculadas (una sola pasada)."""
+    total, n_pares, n_individual = estadisticas
+    if total == 0:
+        return 0.0
+    valores = [
+        _npmi_par(w1, w2, total, n_pares, n_individual)
+        for tema in temas
+        for w1, w2 in combinations(tema[:n_palabras], 2)
+    ]
+    return float(np.mean(valores)) if valores else 0.0
+
+
 def coherencia_npmi(
     temas: list[list[str]],
     textos_procesados: list[str],
@@ -102,19 +118,8 @@ def coherencia_npmi(
     Misma medida para LDA y NMF: mismos temas, mismo corpus de referencia
     y mismo número de términos destacados.
     """
-    total, n_pares, n_individual = _estadisticas_coocurrencia(
-        textos_procesados, ventana
-    )
-    if total == 0:
-        return 0.0
-    valores = []
-    for tema in temas:
-        palabras = tema[:n_palabras]
-        for w1, w2 in combinations(palabras, 2):
-            valores.append(_npmi_par(w1, w2, total, n_pares, n_individual))
-    if not valores:
-        return 0.0
-    return float(np.mean(valores))
+    estadisticas = _estadisticas_coocurrencia(textos_procesados, ventana)
+    return _npmi_media(temas, estadisticas, n_palabras)
 
 
 def conteo_predominante(pesos: np.ndarray) -> dict[int, int]:
@@ -130,14 +135,18 @@ def resumen_modelo(
     vocabulario: list[str],
     textos_procesados: list[str],
     n_palabras: int = 10,
+    ventana: int = 10,
 ) -> dict:
     """Evaluación completa de un modelo entrenado, lista para la interfaz.
 
     Claves: nombre, n_temas, temas [{tema, palabras, coherencia}],
     diversidad, coherencia (media), distribucion (docs por tema predominante).
+
+    Las co-apariciones del corpus se cuentan UNA sola vez y se reutilizan
+    para la coherencia de cada tema y para la media del modelo.
     """
     temas = palabras_por_tema(modelo, vocabulario, n_palabras)
-    pesos = modelo.transform(matriz)
+    estadisticas = _estadisticas_coocurrencia(textos_procesados, ventana)
     return {
         "nombre": nombre,
         "n_temas": len(temas),
@@ -145,27 +154,11 @@ def resumen_modelo(
             {
                 "tema": k,
                 "palabras": tema,
-                "coherencia": _coherencia_tema(tema, textos_procesados, n_palabras),
+                "coherencia": _npmi_media([tema], estadisticas, n_palabras),
             }
             for k, tema in enumerate(temas)
         ],
         "diversidad": diversidad_tematica(temas),
-        "coherencia": coherencia_npmi(temas, textos_procesados, n_palabras),
-        "distribucion": conteo_predominante(pesos),
+        "coherencia": _npmi_media(temas, estadisticas, n_palabras),
+        "distribucion": conteo_predominante(pesos_documento(modelo, matriz)),
     }
-
-
-def _coherencia_tema(
-    tema: list[str], textos_procesados: list[str], n_palabras: int, ventana: int = 10
-) -> float:
-    """NPMI media de los pares de palabras principales de UN tema."""
-    total, n_pares, n_individual = _estadisticas_coocurrencia(
-        textos_procesados, ventana
-    )
-    if total == 0:
-        return 0.0
-    pares = list(combinations(tema[:n_palabras], 2))
-    if not pares:
-        return 0.0
-    valores = [_npmi_par(w1, w2, total, n_pares, n_individual) for w1, w2 in pares]
-    return float(np.mean(valores))

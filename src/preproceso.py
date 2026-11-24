@@ -16,6 +16,8 @@ import re
 
 import spacy
 
+from src.carga_datos import MIN_PALABRAS_CONTENIDO, _contenido_valido
+
 NOMBRE_MODELO = "es_core_news_sm"
 LONGITUD_MINIMA_TOKEN = 3
 
@@ -76,41 +78,36 @@ def _token_aceptado(lemma: str, es_stop: bool) -> bool:
     return lemma.isalpha() and len(lemma) >= LONGITUD_MINIMA_TOKEN
 
 
+def _preparar(texto: str) -> str:
+    """Acota, limpia y tokeniza: el texto que recibe spaCy."""
+    return " ".join(tokenizar(_acotar_texto(texto)))
+
+
+def _lemas_utiles(doc) -> str:
+    """Lemas de un Doc de spaCy que pasan el filtro temático, unidos por espacios."""
+    candidatos = ((t.lemma_.lower(), t.is_stop) for t in doc)
+    return " ".join(lema for lema, es_stop in candidatos if _token_aceptado(lema, es_stop))
+
+
 def procesar_texto(texto: str) -> str:
     """Pipeline completo: devuelve los lemas útiles unidos por espacios."""
-    nlp = obtener_nlp()
-    tokens = tokenizar(_acotar_texto(texto))
-    if not tokens:
+    limpio = _preparar(texto)
+    if not limpio:
         return ""
-    doc = nlp(" ".join(tokens))
-    lemas = [
-        t.lemma_.lower()
-        for t in doc
-        if _token_aceptado(t.lemma_.lower(), t.is_stop)
-    ]
-    return " ".join(lemas)
+    return _lemas_utiles(obtener_nlp()(limpio))
 
 
 def procesar_corpus(textos: list[str]) -> list[str]:
     """Procesa todos los documentos en lote (más rápido que doc por doc)."""
     nlp = obtener_nlp()
-    limpios = [" ".join(tokenizar(_acotar_texto(t))) for t in textos]
-    resultado: list[str] = []
-    for doc in nlp.pipe(limpios, batch_size=32):
-        lemas = [
-            t.lemma_.lower()
-            for t in doc
-            if _token_aceptado(t.lemma_.lower(), t.is_stop)
-        ]
-        resultado.append(" ".join(lemas))
-    return resultado
+    limpios = [_preparar(t) for t in textos]
+    return [_lemas_utiles(doc) for doc in nlp.pipe(limpios, batch_size=32)]
 
 
-def es_documento_valido(texto: str, min_palabras: int = 5) -> bool:
+def es_documento_valido(texto: str, min_palabras: int = MIN_PALABRAS_CONTENIDO) -> bool:
     """Detecta documentos vacíos o demasiado cortos para aportar temas.
 
-    Cuenta solo tokens con letras: ',,,' no es una palabra.
+    Cuenta solo tokens con letras: ',,,' no es una palabra. Es la misma
+    regla que aplica la carga de datos (ETAPA 1), definida en un solo lugar.
     """
-    if not isinstance(texto, str):
-        return False
-    return sum(1 for tok in texto.split() if any(c.isalpha() for c in tok)) >= min_palabras
+    return _contenido_valido(texto, min_palabras)

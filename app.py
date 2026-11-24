@@ -15,9 +15,10 @@ import pandas as pd
 import streamlit as st
 
 from src.carga_datos import cargar_carpeta_txt, cargar_csv
-from src.modelos import SEMILLA_ALEATORIA, indices_representativos
+from src.modelos import SEMILLA_ALEATORIA, indices_representativos, pesos_documento
 from src.pipeline import ejecutar_pipeline
 from src.preproceso import procesar_corpus
+from src.representacion import terminos_vocabulario
 
 ROOT = Path(__file__).resolve().parent
 RUTA_DEMO = ROOT / "datos" / "noticias_demo.csv"
@@ -27,14 +28,33 @@ TITULO_APP = "Explorador Inteligente de Temas – Grupo 15"
 COLOR_LDA = "#2a78d6"
 COLOR_NMF = "#eb6834"
 
-PAGINAS = [
-    "Inicio",
-    "1. Cargar noticias",
-    "2. Preprocesamiento",
-    "3. Modelo LDA",
-    "4. Modelo NMF",
-    "5. Comparación y evaluación",
-]
+# Lo único que cambia entre las páginas de LDA y NMF: número de página,
+# claves del resultado del pipeline (ruta de representación y modelo),
+# color y explicación.
+MODELOS = {
+    "LDA": {
+        "numero": "3.",
+        "ruta": "conteos",
+        "modelo": "lda",
+        "color": COLOR_LDA,
+        "descripcion": (
+            "ETAPA 4 (MODELO 1): LDA sobre CONTEOS de palabras "
+            "(CountVectorizer). Cada documento es una mezcla probabilística "
+            "de temas (Blei et al., 2003)."
+        ),
+    },
+    "NMF": {
+        "numero": "4.",
+        "ruta": "tfidf",
+        "modelo": "nmf",
+        "color": COLOR_NMF,
+        "descripcion": (
+            "ETAPA 4 (MODELO 2): NMF sobre TF-IDF. Los pesos son "
+            "coeficientes de la factorización, NO probabilidades como en "
+            "LDA (informe 3.11)."
+        ),
+    },
+}
 
 
 # ------------------------------------------------------------------ helpers
@@ -66,6 +86,20 @@ def etiquetas_temas(valores: dict) -> list[str]:
     predominantes, las claves {0: .., 2: ..} se etiquetan T1 y T3.
     """
     return [f"T{k + 1}" for k in valores]
+
+
+def distribucion_float(resumen: dict) -> dict[int, float]:
+    """Documentos por tema predominante, como floats para graficar."""
+    return {t: float(n) for t, n in resumen["distribucion"].items()}
+
+
+def pesos_palabras(modelo, vocabulario: list[str], id_tema: int, n: int = 10) -> dict[str, float]:
+    """Las n palabras de mayor peso de un tema, con su peso en components_."""
+    componentes = modelo.components_[id_tema]
+    return {
+        vocabulario[int(i)]: float(componentes[i])
+        for i in componentes.argsort()[::-1][:n]
+    }
 
 
 def grafico_barras(valores: dict[str, float], titulo: str, color: str, horizontal: bool = False):
@@ -281,20 +315,10 @@ def pagina_preproceso():
     _badge_datos_demo()
 
 
-def _pagina_modelo(nombre_modelo: str, es_lda: bool):
-    st.header(f"{'3.' if es_lda else '4.'} Modelo {nombre_modelo}")
-    if es_lda:
-        st.caption(
-            "ETAPA 4 (MODELO 1): LDA sobre CONTEOS de palabras "
-            "(CountVectorizer). Cada documento es una mezcla probabilística "
-            "de temas (Blei et al., 2003)."
-        )
-    else:
-        st.caption(
-            "ETAPA 4 (MODELO 2): NMF sobre TF-IDF. Los pesos son "
-            "coeficientes de la factorización, NO probabilidades como en "
-            "LDA (informe 3.11)."
-        )
+def _pagina_modelo(nombre_modelo: str):
+    config = MODELOS[nombre_modelo]
+    st.header(f"{config['numero']} Modelo {nombre_modelo}")
+    st.caption(config["descripcion"])
     if not _textos_procesados():
         st.info("Primero carga noticias y procesa los textos (páginas 1 y 2).")
         return
@@ -305,8 +329,11 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
     if st.button(f"Entrenar {nombre_modelo}", type="primary"):
         with st.spinner(f"Entrenando {nombre_modelo}…"):
             try:
+                # Reutiliza los textos ya lematizados en la página 2.
                 st.session_state["pipeline"] = ejecutar_pipeline(
-                    st.session_state["df"], n_temas=n_temas
+                    st.session_state["df"],
+                    n_temas=n_temas,
+                    textos_procesados=st.session_state["textos_procesados"],
                 )
             except Exception as error:
                 st.error(f"No se pudo entrenar: {error}")
@@ -319,39 +346,25 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
 
     pipeline = st.session_state["pipeline"]
     resumen = pipeline["resumenes"][nombre_modelo]
-    color = COLOR_LDA if es_lda else COLOR_NMF
+    modelo = pipeline[config["modelo"]]
+    vectorizer, matriz = pipeline[config["ruta"]]
+    vocabulario = terminos_vocabulario(vectorizer)
+    color = config["color"]
     _badge_datos_demo()
 
     st.subheader("Temas descubiertos")
     st.dataframe(tabla_temas(resumen), use_container_width=True)
 
     # Pertenencia temática para noticias representativas.
-    if es_lda:
-        _, matriz = pipeline["conteos"]
-        pesos = pipeline["lda"].transform(matriz)
-    else:
-        _, matriz = pipeline["tfidf"]
-        pesos = pipeline["nmf"].transform(matriz)
-
-    representantes = indices_representativos(pesos, n=3)
+    representantes = indices_representativos(pesos_documento(modelo, matriz), n=3)
     df = pipeline["df"]
 
     for t in resumen["temas"]:
         with st.expander(etiqueta_tema(t["tema"], t["palabras"], n=10)):
             st.markdown(f"**Coherencia NPMI del tema:** {t['coherencia']:.3f}")
-            if es_lda:
-                vocab = list(pipeline["conteos"][0].get_feature_names_out())
-                componentes = pipeline["lda"].components_[t["tema"]]
-            else:
-                vocab = list(pipeline["tfidf"][0].get_feature_names_out())
-                componentes = pipeline["nmf"].components_[t["tema"]]
-            pesos_palabras = {
-                vocab[int(i)]: float(componentes[i])
-                for i in componentes.argsort()[::-1][:10]
-            }
             mostrar_grafico(
                 grafico_barras(
-                    pesos_palabras,
+                    pesos_palabras(modelo, vocabulario, t["tema"]),
                     f"Peso de las palabras principales (tema {t['tema'] + 1})",
                     color,
                     horizontal=True,
@@ -366,9 +379,12 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
                 )
 
     st.subheader("Distribución de documentos por tema predominante")
-    distribucion = {t: float(n) for t, n in resumen["distribucion"].items()}
     mostrar_grafico(
-        grafico_barras(distribucion, f"{nombre_modelo}: noticias por tema predominante", color)
+        grafico_barras(
+            distribucion_float(resumen),
+            f"{nombre_modelo}: noticias por tema predominante",
+            color,
+        )
     )
     st.caption(
         "Cada noticia puede tener peso en varios temas (mezcla); aquí se "
@@ -377,11 +393,11 @@ def _pagina_modelo(nombre_modelo: str, es_lda: bool):
 
 
 def pagina_lda():
-    _pagina_modelo("LDA", es_lda=True)
+    _pagina_modelo("LDA")
 
 
 def pagina_nmf():
-    _pagina_modelo("NMF", es_lda=False)
+    _pagina_modelo("NMF")
 
 
 def pagina_comparacion():
@@ -420,19 +436,9 @@ def pagina_comparacion():
     st.subheader("Distribución por tema predominante")
     col_c, col_d = st.columns(2)
     with col_c:
-        mostrar_grafico(
-            grafico_barras(
-                {t: float(n) for t, n in resumen_lda["distribucion"].items()},
-                "LDA", COLOR_LDA,
-            )
-        )
+        mostrar_grafico(grafico_barras(distribucion_float(resumen_lda), "LDA", COLOR_LDA))
     with col_d:
-        mostrar_grafico(
-            grafico_barras(
-                {t: float(n) for t, n in resumen_nmf["distribucion"].items()},
-                "NMF", COLOR_NMF,
-            )
-        )
+        mostrar_grafico(grafico_barras(distribucion_float(resumen_nmf), "NMF", COLOR_NMF))
 
     st.markdown(
         "**Lectura de los resultados:** las métricas orientan, pero la "
@@ -443,6 +449,17 @@ def pagina_comparacion():
 
 
 # ------------------------------------------------------------------ app
+# Menú de navegación: título visible -> función que dibuja la página.
+PAGINAS = {
+    "Inicio": pagina_inicio,
+    "1. Cargar noticias": pagina_cargar,
+    "2. Preprocesamiento": pagina_preproceso,
+    "3. Modelo LDA": pagina_lda,
+    "4. Modelo NMF": pagina_nmf,
+    "5. Comparación y evaluación": pagina_comparacion,
+}
+
+
 def main():
     st.set_page_config(page_title=TITULO_APP, page_icon="🔎", layout="wide")
     st.title(TITULO_APP)
@@ -451,21 +468,14 @@ def main():
         "noticias bolivianas (prototipo académico)"
     )
 
-    pagina = st.sidebar.radio("Navegación", PAGINAS)
+    pagina = st.sidebar.radio("Navegación", list(PAGINAS))
     st.sidebar.markdown("---")
     st.sidebar.caption(
         "Agente de análisis documental (no generativo). Prototipo del "
         "primer avance — Grupo 15, Gestión II-2026."
     )
 
-    {
-        "Inicio": pagina_inicio,
-        "1. Cargar noticias": pagina_cargar,
-        "2. Preprocesamiento": pagina_preproceso,
-        "3. Modelo LDA": pagina_lda,
-        "4. Modelo NMF": pagina_nmf,
-        "5. Comparación y evaluación": pagina_comparacion,
-    }[pagina]()
+    PAGINAS[pagina]()
 
 
 if __name__ == "__main__":
