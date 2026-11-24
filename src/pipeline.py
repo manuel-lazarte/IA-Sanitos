@@ -14,7 +14,10 @@ devuelve un diccionario con todos los artefactos del análisis:
     "resumenes":         {"LDA": resumen, "NMF": resumen} de evaluacion,
   }
 
-No contiene lógica propia: cada etapa vive en su módulo independiente.
+Por defecto conserva LDA + NMF. `modelos=("BERTopic",)` activa solo la
+ruta semántica; las selecciones parciales devuelven solo sus artefactos.
+`config_bertopic` permite ajustar ConfigBERTopic; cuando se proporciona,
+sus valores prevalecen sobre semilla/n_palabras para esa ruta.
 """
 import pandas as pd
 
@@ -29,21 +32,52 @@ def ejecutar_pipeline(
     n_temas: int = 6,
     n_palabras: int = 10,
     semilla: int = SEMILLA_ALEATORIA,
+    *,
+    modelos: tuple[str, ...] = ("LDA", "NMF"),
+    config_bertopic=None,
 ) -> dict:
     """Ejecuta preprocesamiento, representación, modelos y evaluación."""
+    if isinstance(modelos, str) or not modelos or set(modelos) - {"LDA", "NMF", "BERTopic"}:
+        raise ValueError("modelos debe contener LDA, NMF y/o BERTopic.")
     if df is None or len(df) == 0:
         from src.modelos import CorpusInsuficienteError
 
         raise CorpusInsuficienteError(
             "No hay documentos cargados: carga un CSV o TXT con noticias."
         )
-    if len(df) < n_temas:
+    if set(modelos) & {"LDA", "NMF"} and len(df) < n_temas:
         from src.modelos import CorpusInsuficienteError
 
         raise CorpusInsuficienteError(
             f"Corpus insuficiente: {len(df)} documentos para n_temas={n_temas}. "
             "Reduce el número de temas o agrega documentos."
         )
+
+    if set(modelos) != {"LDA", "NMF"}:
+        resultado = {"df": df, "resumenes": {}}
+        if set(modelos) & {"LDA", "NMF"}:
+            textos = procesar_corpus(df["contenido"].fillna("").astype(str).tolist())
+            resultado["textos_procesados"] = textos
+            for nombre, clave, construir, entrenar in (
+                ("LDA", "conteos", construir_matriz_conteos, entrenar_lda),
+                ("NMF", "tfidf", construir_matriz_tfidf, entrenar_nmf),
+            ):
+                if nombre in modelos:
+                    vec, matriz = construir(textos)
+                    modelo = entrenar(matriz, n_temas=n_temas, semilla=semilla)
+                    resultado[clave] = (vec, matriz)
+                    resultado[nombre.lower()] = modelo
+                    resultado["resumenes"][nombre] = resumen_modelo(
+                        nombre, modelo, matriz, list(vec.get_feature_names_out()), textos, n_palabras
+                    )
+        if "BERTopic" in modelos:
+            from src.bertopic_modelo import ConfigBERTopic, entrenar_bertopic
+
+            config = config_bertopic or ConfigBERTopic(semilla=semilla, n_palabras=n_palabras)
+            modelo, resumen = entrenar_bertopic(df, config)
+            resultado["bertopic"] = modelo
+            resultado["resumenes"]["BERTopic"] = resumen
+        return resultado
 
     textos = df["contenido"].fillna("").astype(str).tolist()
     textos_procesados = procesar_corpus(textos)

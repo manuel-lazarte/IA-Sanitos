@@ -1,5 +1,11 @@
 # Preparación para la Defensa — Explorador Inteligente de Temas (Grupo 15)
 
+> Nota de vigencia, 24/11/2026: esta guía describe el prototipo inicial LDA/NMF.
+> En `feature/bertopic-hdbscan` ya existe la tercera ruta por API/consola.
+> Las referencias de esta guía a BERTopic como futuro quedan sustituidas por
+> [la decisión técnica y contrato actual](DECISION_TECNICA_BERTOPIC_HDBSCAN.md).
+> Sus cifras históricas no sustituyen una ejecución del entorno actual.
+
 Documento de estudio para la defensa oral ante la docente. Todas las
 respuestas están ancladas al **código real** (con archivo y línea), al
 **informe del primer avance** (sección citada) y a **resultados reales de

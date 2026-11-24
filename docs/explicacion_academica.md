@@ -1,5 +1,12 @@
 # Guía académica para defender el prototipo — Grupo 15
 
+> Actualización 24/11/2026: la rama `feature/bertopic-hdbscan` incorpora una
+> tercera ruta independiente por API/consola: E5 multilingüe, UMAP, HDBSCAN
+> y c-TF-IDF. Conserva noticias sin grupo (-1). Los apartados siguientes
+> explican principalmente el prototipo léxico inicial; consultar
+> [decisión técnica BERTopic](DECISION_TECNICA_BERTOPIC_HDBSCAN.md) para el
+> contrato, tratamiento de noticias largas, reproducción y límites de evaluación.
+
 Respuestas sencillas a las preguntas de la defensa, cada una anclada a la
 sección del informe y al módulo del código que la implementa.
 
@@ -141,8 +148,8 @@ verifican que no hay resultados simulados.
 - **Coherencia Cv** sobre corpus de referencia externo y protocolo de
   revisión humana con dos revisores y registro de desacuerdos (informe
   3.13).
-- **BERTopic** como ampliación experimental con embeddings en español,
-  registrando la proporción de documentos sin grupo (informe 3.12).
+- **BERTopic**: ruta implementada por API/consola; falta su integración visual,
+  evaluación homogénea con LDA/NMF y validación con corpus real (informe 3.12).
 - Análisis por **medio y por fecha** (los metadatos se conservan para eso)
   y control del vocabulario dominante de un medio (informe 4.5).
 
