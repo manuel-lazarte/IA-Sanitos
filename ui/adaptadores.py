@@ -16,8 +16,9 @@ METODOS = ("LDA", "NMF", "BERTopic")
 DESCRIPCIONES = {
     "LDA": "LDA trabaja sobre conteos de palabras: cada noticia es una mezcla de temas con proporciones.",
     "NMF": "NMF factoriza la matriz TF-IDF: sus pesos son coeficientes de contribución, no probabilidades.",
-    "BERTopic": "BERTopic agruparía las noticias por similitud de significado y separaría las atípicas. "
-                "Este método lo integra otro frente del grupo.",
+    "BERTopic": "BERTopic agrupa las noticias por similitud de significado (embeddings) y separa las "
+                "noticias atípicas. Es la ruta opcional: activa «Incluir BERTopic» al analizar "
+                "(requiere el paquete de requirements-bertopic.txt).",
 }
 
 
