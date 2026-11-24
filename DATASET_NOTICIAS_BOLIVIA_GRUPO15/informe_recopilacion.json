@@ -1,0 +1,37 @@
+{
+  "fecha_recopilacion": "2026-11-24T02:52:25.345338+00:00",
+  "medios": [
+    "ABI",
+    "El Deber"
+  ],
+  "intervalos": {
+    "ABI": [
+      "2026-11-01",
+      "2026-11-24"
+    ],
+    "El Deber": [
+      "2026-11-21",
+      "2026-11-24"
+    ]
+  },
+  "objetivo": 300,
+  "modo_anexar": true,
+  "cuotas_por_medio": {
+    "ABI": 0,
+    "El Deber": 138
+  },
+  "validos": 388,
+  "contadores": {
+    "previos_cargados": 262,
+    "ABI:omitido_cuota_completa": 0,
+    "El Deber:candidatos": 127,
+    "El Deber:descargas": 127,
+    "El Deber:fallos_descarga": 1,
+    "El Deber:validos": 126
+  },
+  "limitaciones": [
+    "La Razón bloquea clientes automatizados (403) y Los Tiempos no respondió: se descartaron en la auditoría de acceso.",
+    "Los sitemaps públicos de El Deber solo exponen los últimos días; su archivo/API está excluido en robots.txt y NO se utilizó.",
+    "La fecha de El Deber proviene del lastmod/JSON-LD del artículo; corresponde a publicación o última modificación."
+  ]
+}

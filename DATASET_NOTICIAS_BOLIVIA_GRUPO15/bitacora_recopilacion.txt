@@ -1,0 +1,7 @@
+{
+  "ABI:candidatos": 924,
+  "ABI:descargas": 320,
+  "ABI:validos": 320,
+  "El Deber:omitido_cuota_completa": 0
+}
+TOTAL VÁLIDOS: 320

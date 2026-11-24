@@ -1,0 +1,9 @@
+{
+  "previos_cargados": 262,
+  "ABI:omitido_cuota_completa": 0,
+  "El Deber:candidatos": 127,
+  "El Deber:descargas": 127,
+  "El Deber:fallos_descarga": 1,
+  "El Deber:validos": 126
+}
+TOTAL VÁLIDOS: 388
