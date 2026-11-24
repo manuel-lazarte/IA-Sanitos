@@ -380,8 +380,9 @@ def paso_analizar():
     )
 
     st.checkbox(
-        "Incluir BERTopic (ruta semántica opcional; requiere instalar "
-        "`pip install -r requirements-bertopic.txt`, recomendado Python 3.11-3.12)",
+        "Incluir BERTopic (ruta semántica: embeddings + HDBSCAN; requiere el "
+        "paquete opcional de requirements-bertopic.txt, recomendado Python 3.11-3.12)",
+        value=True,
         key="incluir_bertopic",
     )
 
@@ -512,8 +513,9 @@ def paso_explorar():
         if res is None:
             estado(
                 "Aún no disponible",
-                "BERTopic no está conectado al pipeline. Este método lo "
-                "integra otro frente del grupo.",
+                "Este análisis se entrenó sin BERTopic. Vuelve al paso "
+                "«Analizar», deja marcada la opción «Incluir BERTopic» y "
+                "analiza de nuevo para ver sus temas aquí.",
                 icono="🚧",
             )
         else:
