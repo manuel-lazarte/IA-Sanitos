@@ -12,8 +12,10 @@ Ingeniería de Sistemas · Inteligencia Artificial · Gestión II-2026.
 > `Primer_avance_IA_Grupo_15_BLANCO_Y_NEGRO.docx`): preprocesamiento en
 > español, representación numérica (CountVectorizer / TF-IDF), entrenamiento
 > real de LDA y NMF con scikit-learn, evaluación por **diversidad temática** y
-> **coherencia NPMI**, e interfaz Streamlit. BERTopic queda como ampliación
-> futura, según el informe.
+> **coherencia NPMI**, e interfaz Streamlit. Se incorpora además la ruta
+> opcional de ejecución **BERTopic + UMAP + HDBSCAN + c-TF-IDF** por API Python
+> y consola. Su integración visual queda a cargo del frente frontend.
+> El acuerdo actual del grupo amplía el alcance del informe original.
 
 ## ⚠️ Datos de demostración
 
@@ -30,7 +32,51 @@ economía/precios, deportes, salud y educación. Ver `datos/LEEME.txt`.
   verificado en Python 3.15 (macOS).
 - Sin claves API ni servicios externos: todo corre localmente.
 - Conexión solo necesaria una vez para instalar dependencias y el modelo
-  de spaCy.
+  de spaCy y, si se utiliza BERTopic, el codificador E5 multilingüe.
+
+## BERTopic/HDBSCAN
+
+Con Python 3.11 y desde la raíz del repositorio (no requiere GPU):
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-bertopic.txt
+.\.venv\Scripts\python.exe -m src.demo_bertopic
+# Tras descargar E5 una vez:
+.\.venv\Scripts\python.exe -m src.demo_bertopic --offline
+# Corpus futuro con las mismas columnas:
+.\.venv\Scripts\python.exe -m src.demo_bertopic --csv datos/noticias_reales.csv
+```
+
+El comando exporta noticias, asignaciones, palabras, representantes, atípicos,
+parámetros y versiones a `output/bertopic/resumen.json` (excluido de Git).
+La caché E5 queda en `.cache/huggingface/` (también excluida).
+La instalación base sigue siendo suficiente para LDA/NMF.
+
+```python
+from src.carga_datos import cargar_csv
+from src.pipeline import ejecutar_pipeline
+
+df, informe = cargar_csv("datos/noticias_demo.csv")
+resultado = ejecutar_pipeline(df, modelos=("BERTopic",))
+resumen = resultado["resumenes"]["BERTopic"]
+atipicos = resultado["df"].iloc[resumen["atipicos"]["doc_ids"]]
+# También acepta ("LDA",), ("NMF",) o ("LDA", "NMF", "BERTopic").
+# Sin modelos=, conserva la ejecución original LDA + NMF.
+```
+
+Pruebas habituales: `python -m pytest -q`. Para incluir el entrenamiento real
+(primero descargar E5 ejecutando el demo):
+
+```powershell
+$env:RUN_BERTOPIC_INTEGRATION = "1"
+.\.venv\Scripts\python.exe -m pytest -q
+Remove-Item Env:RUN_BERTOPIC_INTEGRATION
+```
+
+Decisiones, contrato para frontend/evaluación y límites:
+[`docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md`](docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md).
+Evidencia ejecutada y resultados del demo:
+[`docs/VERIFICACION_BERTOPIC_HDBSCAN.md`](docs/VERIFICACION_BERTOPIC_HDBSCAN.md).
 
 ## Instalación en Windows (VS Code)
 
@@ -75,7 +121,7 @@ Se abre en `http://localhost:8501`. Flujo de uso:
 pytest
 ```
 
-Comportamiento esperado (59 pruebas en 8 archivos):
+Pruebas originales (59 casos) y pruebas nuevas de la ruta semántica:
 
 | Archivo | Qué comprueba |
 |---|---|
@@ -88,7 +134,9 @@ Comportamiento esperado (59 pruebas en 8 archivos):
 | `test_integracion.py` | pipeline completo sobre el corpus demo: 6 temas por modelo, temas que reflejan el corpus, **determinismo** (dos ejecuciones = mismos temas) |
 | `test_app.py` | helpers de presentación de la interfaz |
 
-Salida esperada: `59 passed` en unos segundos.
+`tests/test_bertopic.py` agrega validación de entradas, trazabilidad, atípicos,
+fragmentación y selección independiente de modelos. La integración real
+se omite explícitamente salvo que se active la variable indicada arriba.
 
 ## Regenerar el corpus demo
 
