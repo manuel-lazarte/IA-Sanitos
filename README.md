@@ -32,25 +32,30 @@ economía/precios, deportes, salud y educación. Ver `datos/LEEME.txt`.
 - Conexión solo necesaria una vez para instalar dependencias y el modelo
   de spaCy.
 
-## Instalación en Windows (VS Code)
+## Instalación
+
+Sin entorno virtual: se usa el Python del sistema.
+
+**Linux (Debian/Ubuntu)** — el Python del sistema bloquea `pip install`
+(PEP 668), así que se instala en el directorio del usuario:
 
 ```bash
-# 1. Crear entorno virtual (en la terminal integrada de VS Code)
-python -m venv .venv
+# 1. Instalar dependencias en ~/.local
+python3 -m pip install --user --break-system-packages -r requirements.txt
 
-# 2. Activar (PowerShell)
-.venv\Scripts\Activate.ps1
-#    o en CMD:  .venv\Scripts\activate.bat
-
-# 3. Instalar dependencias
-pip install -r requirements.txt
-
-# 4. Descargar el modelo de español de spaCy (obligatorio, ~13 MB)
-python -m spacy download es_core_news_sm
+# 2. Descargar el modelo de español de spaCy (obligatorio, ~13 MB)
+python3 -m pip install --user --break-system-packages https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.8.0/es_core_news_sm-3.8.0-py3-none-any.whl
 ```
 
-Si PowerShell bloquea la activación: `Set-ExecutionPolicy -ExecutionPolicy
-RemoteSigned -Scope CurrentUser` (una sola vez).
+**Windows (VS Code)** — donde `pip install` no está bloqueado:
+
+```bash
+# 1. Instalar dependencias
+pip install -r requirements.txt
+
+# 2. Descargar el modelo de español de spaCy (obligatorio, ~13 MB)
+python -m spacy download es_core_news_sm
+```
 
 ## Ejecución
 
