@@ -1,191 +1,197 @@
-# Explorador Inteligente de Temas – Grupo 15
+# Descubrimiento de temas en noticias bolivianas
 
 [![Pruebas](https://github.com/manuel-lazarte/IA-Sanitos/actions/workflows/tests.yml/badge.svg)](https://github.com/manuel-lazarte/IA-Sanitos/actions/workflows/tests.yml)
 
-**Prototipo académico** de agente de análisis documental: descubre **temas
-recurrentes** en noticias en español mediante **aprendizaje no supervisado**
-(modelado temático), comparando **LDA** (conteos de palabras) y **NMF**
-(TF-IDF) sobre el mismo corpus. Universidad Mayor de San Simón (UMSS) ·
-Ingeniería de Sistemas · Inteligencia Artificial · Gestión II-2026.
+**UMSS · Ingeniería de Sistemas · Inteligencia Artificial · Grupo 15 · II-2026**
 
-> Este prototipo implementa el primer avance del grupo (ver
-> `Primer_avance_IA_Grupo_15_BLANCO_Y_NEGRO.docx`): preprocesamiento en
-> español, representación numérica (CountVectorizer / TF-IDF), entrenamiento
-> real de LDA y NMF con scikit-learn, evaluación por **diversidad temática** y
-> **coherencia NPMI**, e interfaz Streamlit. Se incorpora además la ruta
-> opcional de ejecución **BERTopic + UMAP + HDBSCAN + c-TF-IDF** por API Python
-> y consola. Su integración visual queda a cargo del frente frontend.
-> El acuerdo actual del grupo amplía el alcance del informe original.
+IA-Sanitos es un sistema de aprendizaje no supervisado que identifica temas recurrentes en noticias en español sin utilizar etiquetas predefinidas. Permite explorar palabras clave, noticias representativas y métricas mediante una interfaz web local.
 
-## ⚠️ Datos de demostración
+## Métodos utilizados
 
-El corpus incluido (`datos/noticias_demo.csv`, 30 noticias) es **100%
-sintético**: textos ficticios generados con semilla fija, medios
-inexistentes («Medio Demo 1» / «Medio Demo 2») y URLs de ejemplo
-(`https://demo.ejemplo/`). **Ningún texto proviene de un medio real.**
-Los 6 temas intencionales del corpus son: combustibles, agua/sequía,
-economía/precios, deportes, salud y educación. Ver `datos/LEEME.txt`.
+| Método | Funcionamiento |
+|---|---|
+| LDA | Identifica mezclas probabilísticas de temas a partir de conteos de palabras. |
+| NMF | Factoriza una matriz TF-IDF para obtener componentes temáticos. |
+| BERTopic | Genera embeddings con Multilingual E5, reduce dimensiones con UMAP, agrupa por densidad con HDBSCAN y describe los temas mediante c-TF-IDF. |
 
-## Requisitos
+LDA y NMF requieren seleccionar el número de temas. BERTopic descubre grupos sin fijar ese número previamente; las noticias sin grupo se identifican con `-1`.
 
-- **Python 3.11 a 3.13** (recomendado en Windows). El proyecto también fue
-  verificado en Python 3.15 (macOS).
-- Sin claves API ni servicios externos: todo corre localmente.
-- Conexión solo necesaria una vez para instalar dependencias y el modelo
-  de spaCy y, si se utiliza BERTopic, el codificador E5 multilingüe.
+## Tecnologías
 
-## BERTopic/HDBSCAN
+- Python
+- Pandas y NumPy
+- spaCy
+- Scikit-learn
+- Sentence Transformers
+- BERTopic
+- UMAP
+- HDBSCAN
+- Streamlit
+- Matplotlib
+- Pytest
 
-Con Python 3.11 y desde la raíz del repositorio (no requiere GPU):
+## Datos
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-bertopic.txt
-.\.venv\Scripts\python.exe -m src.demo_bertopic
-# Tras descargar E5 una vez:
-.\.venv\Scripts\python.exe -m src.demo_bertopic --offline
-# Corpus futuro con las mismas columnas:
-.\.venv\Scripts\python.exe -m src.demo_bertopic --csv datos/noticias_reales.csv
-```
+El proyecto dispone de dos corpus independientes:
 
-El comando exporta noticias, asignaciones, palabras, representantes, atípicos,
-parámetros y versiones a `output/bertopic/resumen.json` (excluido de Git).
-La caché E5 queda en `.cache/huggingface/` (también excluida).
-La instalación base sigue siendo suficiente para LDA/NMF.
+| Corpus | Cantidad | Tipo |
+|---|---:|---|
+| ABI | 262 noticias | Real |
+| El Deber | 126 noticias | Real |
+| Corpus real total | 388 noticias | Real |
+| Corpus de demostración | 30 noticias | Sintético |
 
-```python
-from src.carga_datos import cargar_csv
-from src.pipeline import ejecutar_pipeline
+**Ubicación de los datasets:**
 
-df, informe = cargar_csv("datos/noticias_demo.csv")
-resultado = ejecutar_pipeline(df, modelos=("BERTopic",))
-resumen = resultado["resumenes"]["BERTopic"]
-atipicos = resultado["df"].iloc[resumen["atipicos"]["doc_ids"]]
-# También acepta ("LDA",), ("NMF",) o ("LDA", "NMF", "BERTopic").
-# Sin modelos=, conserva la ejecución original LDA + NMF.
-```
+- Corpus real: `DATASET_NOTICIAS_BOLIVIA_GRUPO15/noticias_bolivia.csv`
+- Corpus de demostración: `datos/noticias_demo.csv`
 
-Pruebas habituales: `python -m pytest -q`. Para incluir el entrenamiento real
-(primero descargar E5 ejecutando el demo):
+El archivo CSV debe contener las siguientes columnas:
 
-```powershell
-$env:RUN_BERTOPIC_INTEGRATION = "1"
-.\.venv\Scripts\python.exe -m pytest -q
-Remove-Item Env:RUN_BERTOPIC_INTEGRATION
-```
+| Columna | Descripción |
+|---|---|
+| `titulo` | Título de la noticia. |
+| `medio` | Medio de comunicación. |
+| `fecha` | Fecha de publicación. |
+| `url` | Enlace de la noticia original. |
+| `contenido` | Cuerpo textual de la noticia. |
 
-Decisiones, contrato para frontend/evaluación y límites:
-[`docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md`](docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md).
-Evidencia ejecutada y resultados del demo:
-[`docs/VERIFICACION_BERTOPIC_HDBSCAN.md`](docs/VERIFICACION_BERTOPIC_HDBSCAN.md).
+También se admiten archivos TXT, uno por noticia.
+
+Los corpus real y sintético no deben mezclarse. Los textos reales están sujetos a las condiciones de uso de sus respectivos medios.
+
+Para más información, consultar la [documentación del dataset](DATASET_NOTICIAS_BOLIVIA_GRUPO15/LEEME.md).
 
 ## Instalación
 
-Sin entorno virtual: se usa el Python del sistema.
+### Requisitos
 
-**Linux (Debian/Ubuntu)** — el Python del sistema bloquea `pip install`
-(PEP 668), así que se instala en el directorio del usuario:
+- Python 3.11 recomendado.
+- Git.
+- Conexión a internet para instalar las dependencias y descargar los modelos.
 
-```bash
-# 1. Instalar dependencias en ~/.local
-python3 -m pip install --user --break-system-packages -r requirements.txt
+No se necesita GPU ni clave API.
 
-# 2. Descargar el modelo de español de spaCy (obligatorio, ~13 MB)
-python3 -m pip install --user --break-system-packages https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.8.0/es_core_news_sm-3.8.0-py3-none-any.whl
+### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/manuel-lazarte/IA-Sanitos.git
+cd IA-Sanitos
+
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install -r requirements.txt -r requirements-bertopic.txt
+python -m spacy download es_core_news_sm
 ```
 
-**Windows (VS Code)** — donde `pip install` no está bloqueado:
+### Linux / macOS
 
 ```bash
-# 1. Instalar dependencias
-pip install -r requirements.txt
+git clone https://github.com/manuel-lazarte/IA-Sanitos.git
+cd IA-Sanitos
 
-# 2. Descargar el modelo de español de spaCy (obligatorio, ~13 MB)
+python3.11 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install -r requirements.txt -r requirements-bertopic.txt
 python -m spacy download es_core_news_sm
 ```
 
 ## Ejecución
 
+Con el entorno virtual activado, ejecutar desde la raíz del repositorio:
+
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
-Se abre en `http://localhost:8501`. Flujo de uso:
+Acceder a la aplicación desde el navegador:
 
-1. **Cargar noticias** — botón «Cargar» con el corpus demo, o sube tu CSV
-   (columnas `titulo, medio, fecha, url, contenido`) o archivos TXT.
-2. **Preprocesamiento** — botón «Procesar textos» (spaCy: minúsculas, sin
-   URLs/signos, sin palabras vacías, lemas; **tildes preservadas**).
-3. **Modelo LDA** / **4. Modelo NMF** — elige el número de temas (2–10) y
-   entrena. La semilla es fija (42): los resultados son reproducibles.
-4. **Comparación y evaluación** — diversidad y coherencia NPMI de ambos
-   modelos lado a lado.
+http://localhost:8501
+
+### Funcionamiento
+
+1. **Cargar noticias:** seleccionar el corpus de demostración o cargar un archivo CSV o archivos TXT.
+2. **Analizar:** seleccionar el número de temas para LDA y NMF (6 por defecto), mantener activada la opción **Incluir BERTopic** y pulsar **Analizar noticias**.
+3. **Explorar temas:** seleccionar el método, consultar las palabras principales, noticias representativas y métricas, y aplicar filtros por medio o fecha.
+
+La primera ejecución de BERTopic requiere descargar el codificador Multilingual E5.
+
+Para ejecutar los tres métodos directamente desde Python, se debe indicar `modelos=("LDA", "NMF", "BERTopic")` al llamar a `ejecutar_pipeline`.
+
+## Evaluación
+
+El sistema utiliza los siguientes indicadores:
+
+- **Coherencia NPMI:** mide la asociación estadística entre las palabras principales de los temas de LDA y NMF.
+- **Diversidad temática:** mide la proporción de términos únicos entre los temas descubiertos.
+- **Cobertura temática:** permite identificar la proporción de noticias agrupadas y sin grupo en BERTopic.
+
+La evaluación NPMI comparable de BERTopic y el registro de revisión humana se encuentran pendientes.
+
+## Estructura del repositorio
+
+```text
+IA-Sanitos/
+├── app.py                   # Interfaz Streamlit
+├── src/
+│   ├── carga_datos.py       # Carga y validación
+│   ├── preproceso.py        # Limpieza y lematización
+│   ├── representacion.py    # Conteos y TF-IDF
+│   ├── modelos.py           # LDA y NMF
+│   ├── bertopic_modelo.py   # E5, UMAP, HDBSCAN y c-TF-IDF
+│   ├── evaluacion.py        # Métricas de evaluación
+│   ├── pipeline.py          # Coordinación de modelos
+│   └── demo_bertopic.py      # Ejecución por consola
+├── ui/                      # Componentes de interfaz
+├── datos/                   # Corpus sintético
+├── DATASET_NOTICIAS_BOLIVIA_GRUPO15/
+│                            # Corpus real y trazabilidad
+├── docs/                    # Documentación técnica
+├── tests/                   # Pruebas automatizadas
+├── requirements.txt
+└── requirements-bertopic.txt
+```
 
 ## Pruebas
 
-```bash
-pytest
-```
-
-Pruebas originales (59 casos) y pruebas nuevas de la ruta semántica:
-
-| Archivo | Qué comprueba |
-|---|---|
-| `test_datos_demo.py` | estructura y vocabulario del corpus demo (30 noticias, medios sintéticos) |
-| `test_carga_datos.py` | carga CSV/TXT, normalización de encabezados, error si falta columna, conteo de inválidos/duplicados |
-| `test_preproceso.py` | limpieza, lematización, stopwords, **tildes preservadas** («público» ≠ «publicó»), detección de documentos vacíos |
-| `test_representacion.py` | matrices de conteos y TF-IDF, vocabularios comparables, error si no hay vocabulario útil |
-| `test_modelos.py` | entrenamiento LDA/NMF, distribuciones, reproducibilidad con semilla, error si hay más temas que documentos |
-| `test_evaluacion.py` | diversidad temática y coherencia NPMI (temas coherentes > pares cruzados) |
-| `test_integracion.py` | pipeline completo sobre el corpus demo: 6 temas por modelo, temas que reflejan el corpus, **determinismo** (dos ejecuciones = mismos temas) |
-| `test_app.py` | helpers de presentación de la interfaz |
-
-`tests/test_bertopic.py` agrega validación de entradas, trazabilidad, atípicos,
-fragmentación y selección independiente de modelos. La integración real
-se omite explícitamente salvo que se active la variable indicada arriba.
-
-## Regenerar el corpus demo
+Ejecutar las pruebas automatizadas:
 
 ```bash
-python datos/generar_noticias_demo.py
+python -m pytest -q
 ```
 
-## Estructura del proyecto
+Validar el dataset real:
 
-```
-IA/
-├── app.py                     # Interfaz Streamlit (ETAPA 5, presentación)
-├── src/
-│   ├── carga_datos.py         # ETAPA 1: carga CSV/TXT, duplicados, vacíos
-│   ├── preproceso.py          # ETAPA 2: limpieza, lemas, stopwords (spaCy)
-│   ├── representacion.py      # ETAPA 3: CountVectorizer (LDA) y TF-IDF (NMF)
-│   ├── modelos.py             # ETAPA 4: entrenamiento LDA y NMF (scikit-learn)
-│   ├── evaluacion.py          # ETAPA 6: diversidad + coherencia NPMI
-│   └── pipeline.py            # Orquestador: une las seis etapas
-├── datos/
-│   ├── noticias_demo.csv      # Corpus sintético (30 noticias, 6 temas)
-│   ├── generar_noticias_demo.py
-│   └── LEEME.txt              # Aviso de datos sintéticos
-├── tests/                     # Pruebas pytest (8 archivos, 59 pruebas)
-├── docs/
-│   ├── explicacion_academica.md   # Guía para la exposición/defensa
-│   └── superpowers/           # Diseño y plan de implementación
-├── requirements.txt
-└── pytest.ini
+```bash
+python DATASET_NOTICIAS_BOLIVIA_GRUPO15/validar_dataset.py
 ```
 
-## Documentación académica
+Comprobar el funcionamiento de BERTopic:
 
-Para la exposición y defensa del proyecto, ver
-[`docs/explicacion_academica.md`](docs/explicacion_academica.md): qué es el
-agente, cómo funciona LDA y NMF, qué cumple TF-IDF, cómo se comparan los
-modelos y qué demuestra este prototipo — cada respuesta anclada al informe
-y al código.
+```bash
+python -m src.demo_bertopic
+```
 
-## Límites del prototipo
+La ejecución de demostración exporta sus resultados a `output/bertopic/resumen.json`.
 
-- El corpus demo es sintético y pequeño (30 noticias); los temas describen
-  **esa muestra**, no la prensa boliviana.
-- El corpus real (200–400 noticias de hasta dos medios, con uso autorizado)
-  se construirá en etapas posteriores del proyecto.
-- La interpretación de los temas (nombres legibles) es posterior a los
-  modelos y requiere revisión humana, como establece el informe.
+Las pruebas de integración semántica completa requieren activar la variable `RUN_BERTOPIC_INTEGRATION=1`.
+
+Para más información, consultar la [documentación técnica de BERTopic y HDBSCAN](docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md).
+
+## Integrantes
+
+- Ignacio Alex Escobar Vasquez
+- Manuel Jotan Lazarte Ascuy
+- Cristian Samuel Veliz Huanaco
+- Jhoel Zeballos Zelada
+- Ivan Guido Estrada Aguilar
+- Leonardo Anjhelo Quiñones
+- Jack Kevin Yavi Almendras
+
+**Docente:** Lic. Erika Patricia Rodríguez Bilbao.
+
+**Universidad Mayor de San Simón — Facultad de Ciencias y Tecnología.**
+
+Gestión II-2026 · Cochabamba, Bolivia.
