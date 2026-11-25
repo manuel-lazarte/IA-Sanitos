@@ -81,8 +81,13 @@ cd IA-Sanitos
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
+python -m pip install --upgrade pip setuptools wheel
+
 python -m pip install -r requirements.txt -r requirements-bertopic.txt
+
 python -m spacy download es_core_news_sm
+
+python -m pip check
 ```
 
 ### Linux / macOS
@@ -94,9 +99,22 @@ cd IA-Sanitos
 python3.11 -m venv .venv
 source .venv/bin/activate
 
+python -m pip install --upgrade pip setuptools wheel
+
 python -m pip install -r requirements.txt -r requirements-bertopic.txt
+
 python -m spacy download es_core_news_sm
+
+python -m pip check
 ```
+
+Si las dependencias declaradas están correctamente instaladas y son compatibles, el último comando mostrará:
+
+```text
+No broken requirements found.
+```
+
+La ruta completa de BERTopic cuenta con evidencia de verificación en Windows con Python 3.11.9. La compatibilidad de una instalación limpia puede variar según el sistema operativo y la arquitectura del equipo.
 
 ## Ejecución
 
@@ -176,9 +194,25 @@ python -m src.demo_bertopic
 
 La ejecución de demostración exporta sus resultados a `output/bertopic/resumen.json`.
 
-Las pruebas de integración semántica completa requieren activar la variable `RUN_BERTOPIC_INTEGRATION=1`.
+### Pruebas de integración de BERTopic
 
-Para más información, consultar la [documentación técnica de BERTopic y HDBSCAN](docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md).
+Después de ejecutar la demostración y descargar el codificador E5, se pueden habilitar las pruebas de integración semántica.
+
+**Windows (PowerShell):**
+
+```powershell
+$env:RUN_BERTOPIC_INTEGRATION = "1"
+python -m pytest -q
+Remove-Item Env:RUN_BERTOPIC_INTEGRATION
+```
+
+**Linux / macOS:**
+
+```bash
+RUN_BERTOPIC_INTEGRATION=1 python -m pytest -q
+```
+
+Para más información, consultar la [documentación técnica de BERTopic y HDBSCAN](docs/DECISION_TECNICA_BERTOPIC_HDBSCAN.md) y la [evidencia de verificación](docs/VERIFICACION_BERTOPIC_HDBSCAN.md).
 
 ## Integrantes
 
